@@ -89,3 +89,10 @@ Kullanıcı Windows PowerShell + Arduino CLI + AVR kart/kütüphaneleriyle aday�
 **Sınır:** `SOURCE_EXTRACTED_BRANCH_HOST_CPP=PASS`, fakat kod **tüm `.ino`yu, Arduino kütüphanelerini, seri parse döngüsünü, EEPROM veya gerçek Remote stop/başlatma yollarını** yürütmez. Tam `loop/setup` host/native simülasyonu **NOT_RUN**, fiziksel `HW_BENCH` ve `HW_PUMP` **NOT_RUN**. User-supplied geçici P0-01 aday **AVR_COMPILE=2/2 PASS**, ancak bu birleşim endüstriyel sürüm kabulü değildir.
 
 **Karar:** P0-01 adayının matematiksel ve seçilmiş çıkış dalları gözlenen testleri PASS. **Firmware main'e gönderilmedi:** ana döngü, stop gecikmesi ve güç/Remote/USB koşullarındaki tam negatif akışlar açık; ayrıca sürücünün gerçek A4988/DRV8825 zamanlaması doğrulanmadı. Aktif .ino ve v1.04 aynı SHA ile korunuyor. Bir sonraki kabul kapısı tam bütünleşik döngü + motor güvenliği (gerçek cihaz testine kadar REVIEW) ve bağımsız QA'dır.
+
+## 2026-10-31 — Tam setup/loop host C++ entegrasyon test aracı
+
+`tests/p0-01-full-loop-host.cjs` dosyası üretildi. Gerçek v1.05 kaynak gövdesi ve mevcut P0-01 aday yaması üzerinden **tam setup(), loop() ve diğer firmware fonksiyonlarını**, GPIO/LCD/encoder/EEPROM/Remote/Serial sahte çevrebirimleriyle `g++` altında çalıştırmayı hedefler. Normal Dose/Pump/Cal, 24.000 Cal adımı, Remote Hold/Pulse debounce, USB p/d/c/x, sıfır/eksi hız, RNG idle, yerel stop senaryoları içerir. **R-001 güç açılışı Hold LOW otomatik motor başlatma ve R-007 bilinmeyen USB karakteri sonrası sahte RUN durumu ayrı açık risk olarak gözlenir; güvenlik PASS değildir.**
+
+**Durum:** Kaynağa dayalı üreticinin JavaScript sözdizimi PASS, 4 fonksiyon ve 3 aday yaması ayrıştırılabilir; **üretilen tam C++ dosyasının gerçek native derlemesi/çalıştırması henüz NOT_RUN**. Test aracının varlığını PASS sayma. P0-01 aday için Windows Arduino 2/2 AVR derleme PASS korunur. Üretim firmware .ino değişmedi ve endüstriyel RELEASE_BLOCKED.
+
