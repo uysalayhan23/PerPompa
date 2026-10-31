@@ -20,3 +20,7 @@
 | M12 Release | v1.04 arşivi değişmez, v1.05 bağımsız | yanlış klasör, arşiv yazma, HEAD yarışması | Blob SHA ve expected_sha | SOURCE_CHECK |
 
 İlk test altyapısı [tests/reference-gate.cjs](tests/reference-gate.cjs) yalnız statik ve sayısal model kapısıdır. `node` çıktısındaki PASS, `AVR_COMPILE` veya `HW_PUMP` anlamına gelmez. Firmware düzeltme kabulü için ek gerçek kaynak/derleme testleri şarttır.
+
+## Endüstriyel kabul uzantısı (2026-10-31)
+
+G01–G10 ürün release kapıları [INDUSTRIAL_RELEASE_GATE.md](INDUSTRIAL_RELEASE_GATE.md) içinde takip edilir; bu test matrisi bunların yerine geçmez. [RISK_REGISTER.md](RISK_REGISTER.md) R-001–R-012 her test alanının neden gerekli olduğunu gösterir. HOST_CPP test hazırlığı [tests/native-math-harness.cjs](tests/native-math-harness.cjs) dosyasındadır: **henüz burada çalıştırılmış test yok, AVR_COMPILE ve HW_* tümü NOT_RUN.** Bir test aracının varlığı PASS değildir.

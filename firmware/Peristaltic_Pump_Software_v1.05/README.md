@@ -11,6 +11,15 @@
 
 İlk aktif iş: **P0-01 test-first**. Kodu değiştirmeden referans testleri oluşturma ve doğrulama. Native/AVR ve gerçek cihaz kabulü henüz NOT_RUN; statik veya model sonuçları native PASS değildir.
 
+## Endüstriyel kalite ekibi ve ticari ürün kabulü
+
+- [Dokuz rol ve bağımsız inceleme protokolü](QUALITY_TEAM.md)
+- [Endüstriyel RELEASE_BLOCKED / G01–G10 kabul kapıları](INDUSTRIAL_RELEASE_GATE.md)
+- [Risk kayıt defteri R-001–R-012](RISK_REGISTER.md)
+- [Gerçek kaynak C++ hesap testi hazırlığı](tests/native-math-harness.cjs)
+
+Bu dokümanlar **uygunluk sertifikası veya bağımsız laboratuvar testi değildir**. Birden fazla yapay zekâ rolünün değerlendirmesi bağımsız uzman sertifikası sayılmaz. Kök AGENTS.md ve kilitli REVISION_MANIFEST.md aynen geçerlidir.
+
 ## Sürümün oluşturulması
 
 Bu klasördeki `Peristaltic_Pump_Software_v1.05.ino` dosyası v1.04 kaynak dosyasının **değiştirilmemiş kopyasıdır**. Dosya adı v1.05 olarak düzenlenmiş, ancak kodun içeriği ve kontrol mantığı henüz değiştirilmemiştir. `firmware/archive/Peristaltic_Pump_Software_v1.04/` arşivlenmiş referans sürüm olarak korunur.

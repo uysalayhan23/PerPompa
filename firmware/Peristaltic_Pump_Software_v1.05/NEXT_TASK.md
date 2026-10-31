@@ -7,6 +7,13 @@
 **Aşama:** TEST_FIRST / firmware düzeltmesi henüz yapılmadı  
 **Kod kabulü:** PENDING; AVR_COMPILE NOT_RUN; HW_BENCH NOT_RUN; HW_PUMP NOT_RUN; USER_ACCEPTANCE NOT_RUN.
 
+## Endüstriyel ürün kontrol ekibi (2026-10-31)
+
+**Takım:** [QUALITY_TEAM.md](QUALITY_TEAM.md) A01–A09 protokolü oluşturuldu; bu, bağımsız canlı 9 ajan veya otomatik arka plan görevi olduğu iddiası değildir.
+**Endüstriyel serbest bırakma:** [INDUSTRIAL_RELEASE_GATE.md](INDUSTRIAL_RELEASE_GATE.md) G01–G10 = NOT_RUN; **RELEASE_BLOCKED**. [RISK_REGISTER.md](RISK_REGISTER.md) R-001–R-012 açık, risk sayıları kalibrasyon değil.
+**Özgün kaynak host C++ test hazırlığı:** [tests/native-math-harness.cjs](tests/native-math-harness.cjs) eklendi. Çalıştırılana dek HOST_CPP=NOT_RUN; testi yalnız referans kaynak kodundan ayıklanan gerçek C++ hesap fonksiyonları için kapsar; tam AVR/firmware değildir.
+**Kilit:** `AGENTS.md`, `REVISION_MANIFEST.md`, v1.04 arşivi ve aktif v1.05 .ino değiştirilmedi.
+
 ## P0-01 kapsamı
 
 1. İlgili gerçek kaynak: `steps_calc`, `delay_us_calc`, `dose`, `pump`, çağıran `loop/setup`.
