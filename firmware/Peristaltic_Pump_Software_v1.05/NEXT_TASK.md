@@ -138,3 +138,14 @@ Kaynak incelemesi: `exit_action_menu()` RNG'yi temizlerken `usb_start` değişke
 ### R-001/R-007 dar kapsamlı host kanıt güncellemesi (2026-10-31)
 
 Gerçek kaynakta tanımlı Remote başlatma/durdurma koşullarına karşılık gelen **izole C++ host test modeli** g++ 14.2.0, C++17, `-Wall -Wextra -Werror -pedantic -fsanitize=undefined,float-cast-overflow` ile tekrar çalıştırıldı: **17/17 PASS**. Kapsam: EEPROM geçersiz/Pulse/Hold seçimleri, boot LOW fail-closed, debounce, Hold/Pulse başlangıç ve durma, yabancı USB karakterinde RUN/RNG/STEP LOW, USB menüsünden yerel çıkış ve yeniden giriş. Yerel test kaynağı SHA-256: `1cfd7c79ed09f048abfe161349d99e6e1ebfd28d77276bacc2da2c56b0a1cca9`. Bu bir **elle kurulmuş izole kaynak davranış modeli** olup gerçek tam `.ino` veya Arduino binary testi **değildir**. P0-01 seçilmiş kod **42/42**, önceki tam loop **22/22 + 2 risk reproduksiyonu**, önceki aday AVR **2/2** geçmiş delilini değiştirmez. **Yeni 7-anchor R001/R007 adayı AVR_COMPILE ve FULL_LOOP_CPP = NOT_RUN; firmware teslim BLOCKED, HW/RELEASE BLOCKED.**
+
+
+## 2026-10-31 — P0-01 R001/R007 tek seferde çift derleme + tam kaynak host QA aracı
+
+Yeni `tests/p0-01-one-shot-qa.cjs` araç dosyası, mevcut v1.05 aktif `.ino` ve değişmez v1.04 blob `0d965c08947ba0b3170d22fbff806fc2e6f1e83a` kontrolünü yapar; mevcut Windows Arduino CLI kurulumunu PATH veya LOCALAPPDATA/ArduinoCLI altından bulur. Daha sonra ayrı ayrı **gerçek g++ tam setup/loop host** (`P001_RISK_CANDIDATE=1`), önceki 42/42 kaynak-ayıklanmış host ve **yeni 7-anchor risk adayının 16/8 MHz Arduino CLI gerçek derlemeleri** için marker ve exit-code denetimi uygular. Bir kapı FAIL/NOT_RUN ise fail-closed BLOCKED döndürür. Firmware'i veya kartı değiştirmez, GitHub Actions çalıştırmaz. `g++` gerekli; Windows'ta yoksa host QA NOT_RUN/FAIL bildirilir. Başarılı yazılım QA bile G01–G10 fiziksel serbest bırakma yerine geçmez.
+
+**Bu oturumda gerçek `tests/p0-01-one-shot-qa.cjs` Node sözdizimi PASS ve eksik kaynak dosyası üzerinde fail-closed çıkış gözlemi PASS.** İzole R-001/R-007 kaynak-davranış C++ modeli g++/UBSan ile **17/17 PASS** yeniden üretildi (önceki 17/17 korundu). Ancak bu konteynerde güncel GitHub kaynak dosyaları derleyiciye yerel olarak taşınamadı ve AVR CLI/AVR core kurulu değil; **yeni aday FULL_SETUP_LOOP_CPP=NOT_RUN ve AVR_COMPILE=NOT_RUN**. Önceki 42/42, 22/22+2 risk reproduksiyonu, eski aday 2/2 AVR kanıtları korunuyor. **P0-01 firmware=BLOCKED, HW_SETUP=NOT_STARTED, HW_BENCH/HW_PUMP=NOT_RUN, RELEASE_BLOCKED.**
+
+Tek komut (repo ZIP kökünde, Node ve native g++ ve Arduino CLI kurulu ise):
+`node firmware/Peristaltic_Pump_Software_v1.05/tests/p0-01-one-shot-qa.cjs`.
+Çıktı `P001_R001_R007_SOFTWARE_QA=PASS` ve üç alt kapı PASS vermeden `.ino` değişikliği main'e aktarılmaz.
