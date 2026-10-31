@@ -3,7 +3,7 @@
 **Aktif manifest:** [REVISION_MANIFEST.md](REVISION_MANIFEST.md) v1.1 — kullanıcı onaylı tespit → onar → test → teslim → sıradaki iş döngüsü  
 **Başlangıç main HEAD:** `8624b2b78b0bcf4f83dd3388b5533b46e7b7d667` (tarihsel; her zaman canlı HEAD oku)  
 **Arşiv v1.04 kaynak blob kilidi:** `0d965c08947ba0b3170d22fbff806fc2e6f1e83a`  
-**Aktif görev:** `HW-SETUP-01C — bağımsız HW Setup adaptörünü gerçek v1.05 setup/loop/START/LCD kaynaklarına aday olarak bağla; AVR kanıtı olmadan .ino'ya dokunma`  
+**Aktif görev:** `HW-SETUP-01C — geçici entegrasyon adayı hazır; tam setup/loop C++ ve 8/16MHz gerçek AVR QA sonucu bekleniyor, .ino kilitli`  
 **Aşama:** P0-01 aktif yazılım kaynak 32/32 tam loop + 42/42 kaynak + 2/2 AVR PASS; fiziksel ve release BLOCKED. HW-SETUP-01 SPEC/TEST_FIRST.  
 **Kod kabulü:** P0-01 SOURCE/HOST_CPP/AVR_COMPILE=PASS, yeni aktif blob `6617cc38bde9bddf1c32cd0506915c0054556127`; fiziksel HW_BENCH/HW_PUMP/USER_ACCEPTANCE NOT_RUN; RELEASE_BLOCKED.
 
@@ -200,3 +200,17 @@ Tek komut (repo ZIP kökünde, Node ve native g++ ve Arduino CLI kurulu ise):
 **Açık kabul:** Bağımsız AVR probe için araç hazır ama **AVR_PROBE=NOT_RUN**; kabul edilmiş .ino içinde `setup()/loop()` entegrasyonu **NOT_RUN**, entegre 8/16 MHz Arduino derlemesi **NOT_RUN**, gerçek STEP/RNG/LCD/Remote/USB/HW **NOT_RUN**, P0-02 STOP latency **REVIEW**, endüstriyel `RELEASE_BLOCKED`. EEPROM tek bayt inhibit fiziksel kilit değildir; inhibit baytının kendisi yazılırken güç kaybının elektriksel etkileri, donanım brownout ve bağımsız güvenlik HIL'i ayrıca REVIEW.
 
 **Sonraki tek iş:** HW-SETUP-01C — mevcut 11 menü kaydını ve 0–21 EEPROM adreslerini bozmadan yeni HW Setup sayfasının gerçek `setup()/loop()` motor START/STEP/STOP girişlerine bağlanan **geçici kaynak yamasını** üret; özgün tam loop pozitif-negatif, Remote/USB/Local/Cal, LCD/EEPROM ve iki gerçek AVR derleme kapıları PASS olursa ancak o zaman aktif firmware değişikliğini `[skip ci]` ile main'e taşı. Fiziksel ve release kilitlerini koru.
+
+## HW-SETUP-01C — geçici gerçek .ino adayı + fail-closed yazılım QA geçidi (2026-10-31)
+
+**Canlı temel:** `main bf3bf14982008dbf894303af7ed8054c05502d4e`; P0-01 kabul edilmiş v1.05 `.ino` **Git blob `6617cc38bde9bddf1c32cd0506915c0054556127`**. V1.04 arşivi, `REVISION_MANIFEST.md`, `AGENTS.md` değişmedi. Önceki P0-01 **32/32 full-loop**, **42/42 seçilmiş kaynak** ve **2/2 AVR**; profil **125/125 ×2**, bağımsız runtime **486/486 ×2** geçmiş PASS kanıtları yeniden koşulmadı, yeni adayın PASS kanıtı olarak aktarılmadı.
+
+**Yeni dosyalar:** `tests/hw-setup-01c-candidate.cjs` test-öncelikli **geçici** gerçek .ino aday oluşturucu; `tests/hw-setup-01c-qa.cjs` adayın gerçeğe dayalı `setup()/loop()` C++ mock regresyonu ve 16/8 MHz Arduino CLI derlemesini *aynı oturumda* isteyen birleşik kapı. Aracın kendisi kartı flash etmez, aktif .ino'ya yazmaz, Actions/Work/Codex kullanmaz.
+
+**Kaynak tespit/yama planı ve yapısal dry-run:** Mevcut kaynakta 11 menü öğesi olduğu için yeni `HW Setup` ACTION indeksi **11** olarak eklenir ama *eski* EEPROM döngüleri yalnız indeks **0–10** (0–21 byte) ile sınırlanır. Dosyaya yeni `hw-setup-runtime.h` dahil edilir; boot, encoder Board/Driver/Confirm/Cancel, **uzun basmayla ayrı fiziksel teyit**, 16×2 `lcdRows` bağlanır. Motorun **yerel** Start, **Remote** start, **USB** p/d/c ve gerçek **dose/pump STEP** noktalarında bağımsız `SafeSetup::permit` kontrolü; reddedilirse STEP LOW + RNG idle + USB start kapatılması adayda hedeflenir. `tests/hw-setup-01c-candidate.cjs` için **14/14 kaynak anchor eşleşmesi**, **3/3 legacy EEPROM döngüsü korunması**, 27.191 karakterlik geçici aday üretimi, JS parse/dry-run ve test aracı kasıtlı simüle hata durumunda **exit 2 / BLOCKED** denetimleri PASS. **Bunlar SOURCE_CHECK/TEST_TOOL kontrolleridir, native firmware PASS değildir.**
+
+**Yeni aday pozitif-negatif C++ test planı:** Kaynağın tüm `setup()/loop()` gövdesi mock encoder/EEPROM/GPIO/LCD/Serial ile derlenecek; boş EEPROM'da Local/Remote/USB/Cal no-STEP, onaylı dört giriş modu, 24.000 Cal STEP, Remote Hold/Pulse debounce+STOP, USB x, canlı inhibit baytı/CRC tamperi, Board/Driver rotasyon, 16×2 menü, uzun basma ile Save+Confirm, iptal/yeniden giriş, eski EEPROM verisine dokunmama senaryoları. `F_CPU=16000000UL` ve `8000000UL` host testleri geçtikten sonra **aday `.ino` dosyasının kendisi** iki gerçek Arduino Pro Mini hedefinde derlenecek. QA herhangi bir FAIL veya eksik marker için `HW_SETUP_01C_SOFTWARE_QA=BLOCKED` döndürür.
+
+**Kapanmamış kapılar:** `HW_01C_FULL_SETUP_LOOP_CPP=NOT_RUN`, `HW_01C_AVR_16MHZ=NOT_RUN`, `HW_01C_AVR_8MHZ=NOT_RUN`; bu nedenle **HW Setup entegrasyonu aktif .ino'ya yazılmadı**. Ayrıca kaynak adayının gerçek STEP başına EEPROM okumasının darbe periyoduna ve **P0-02 stop gecikmesine etkisi REVIEW** (hız, fiziksel timing ve jitter ölçümü gerekir); elektronik brownout/inhibit byte atomikliği REVIEW. `HW_BENCH/HW_PUMP/USER_ACCEPTANCE=NOT_RUN`, endüstriyel `RELEASE_BLOCKED`.
+
+**Sıradaki güvenli kapı:** Doğrulanmış güncel repo ZIP kökünde `node firmware/Peristaltic_Pump_Software_v1.05/tests/hw-setup-01c-qa.cjs` komutu (native C++17 + UBSan ve Arduino CLI 8/16 core gerekir). Gerçek host/AVR PASS çıktısı olmadan yeni firmware blob üretim main'e aktarılamaz. Test kusuru çıkarsa en küçük testli kaynak yamasıyla düzelt; P0-01'i ve ürün/release kilitlerini koru.
