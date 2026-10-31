@@ -20,7 +20,6 @@ try{
   if(run.error||run.status!==0)throw Error(label+' '+(run.error?.message||run.stderr||run.status));
  };
  check(compiler,['--version'],'CXX_NOT_AVAILABLE');
- check(cli,['version'],'ARDUINO_CLI_NOT_AVAILABLE');
  const prototypeGate=cp.spawnSync(process.execPath,
    [path.join(__dirname,'p0-02-usb-prototype-order-gate.cjs')],
    {encoding:'utf8',timeout:60000,maxBuffer:1048576,env:process.env});
@@ -37,15 +36,24 @@ try{
  if(queueGate.error||queueGate.status!==0||
     !(queueGate.stdout||'').includes('P002_QUEUE_ORDER_NATIVE=2/2 PASS'))
    throw Error('P002_USB_QUEUED_DATA_ORDER_NOT_PASSED '+(queueGate.error?.message||'exit '+queueGate.status));
+ const host=cp.spawnSync(process.execPath,
+   [path.join(__dirname,'p0-02-usb-full-loop-avr-qa.cjs'),'--host-only'],
+   {encoding:'utf8',timeout:240000,maxBuffer:10*1024*1024,env:process.env});
+ if(host.stdout)process.stdout.write(host.stdout);
+ if(host.stderr)process.stderr.write(host.stderr);
+ if(host.error||host.status!==0||
+    !(host.stdout||'').includes('P002_USB_FULL_HOST_ONLY=PASS')||
+    !(host.stdout||'').includes('FULL_SOURCE_HOST_16000000=PASS')||
+    !(host.stdout||'').includes('FULL_SOURCE_HOST_8000000=PASS'))
+  throw Error('P002_FULL_HOST_CXX_NOT_PASSED '+(host.error?.message||'exit '+host.status));
+ check(cli,['version'],'ARDUINO_CLI_NOT_AVAILABLE');
  const result=cp.spawnSync(process.execPath,
-   [path.join(__dirname,'p0-02-usb-full-loop-avr-qa.cjs')],
+   [path.join(__dirname,'p0-02-usb-full-loop-avr-qa.cjs'),'--avr-only'],
    {encoding:'utf8',timeout:240000,maxBuffer:10*1024*1024,env:process.env});
  if(result.stdout)process.stdout.write(result.stdout);
  if(result.stderr)process.stderr.write(result.stderr);
  if(result.error||result.status!==0||
-    !(result.stdout||'').includes('P002_USB_CANDIDATE_FULL_QA=PASS')||
-    !(result.stdout||'').includes('FULL_SOURCE_HOST_16000000=PASS')||
-    !(result.stdout||'').includes('FULL_SOURCE_HOST_8000000=PASS')||
+    !(result.stdout||'').includes('P002_USB_AVR_ONLY=PASS')||
     !(result.stdout||'').includes('P002_USB_AVR_16MHzatmega328=PASS')||
     !(result.stdout||'').includes('P002_USB_AVR_8MHzatmega328=PASS'))
    throw Error('P002_FULL_LOOP_OR_AVR_NOT_PASSED '+(result.error?.message||'exit '+result.status));
