@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "hw-setup-runtime.h"
+#include "p0-02-usb-parser.h"
 
 
 //LCD -----------------------------------------------------------------------------------
@@ -80,6 +81,8 @@ long vol_uL=0;
 long rate_uL_min =0;
 int cal=0;
 boolean usb_start=0;
+perpompa_usb::Parser usbParser;
+bool usbDropUntilEmpty=false;
 char inChar;
 
 
@@ -412,50 +415,28 @@ if (in_action){
    menu_left = true;
   break;
   
-  case 9:
-  while (Serial.available()) {
-    inChar = (char)Serial.read();     // get the new byte:
-    step_counter = 0;
-    if (inChar == 'p'){
-      rate_uL_min=Serial.parseInt();
-      cal=Serial.parseInt();
-      if(cal==0){
-        cal = menu[7].value;
-      }
-      delay_us = delay_us_calc(rate_uL_min, 1, cal, 0);
-      usb_start=true;
-    } else if (inChar == 'd'){
-      vol_uL=Serial.parseInt();
-      rate_uL_min=Serial.parseInt();
-      cal=Serial.parseInt();
-      if(cal==0){
-        cal = menu[7].value;
-      }
-      steps = steps_calc(vol_uL, 1, cal, 0);
-      delay_us = delay_us_calc(rate_uL_min, 1, cal, 0);
-      usb_start=true;
-    } else if (inChar == 'c'){
-      usb_start=true;
-    } else if (inChar == 'w'){
-      cal=Serial.parseInt();
-      menu[7].value =cal;
-      for (int i=0; i < 11; i++){
-      eepromWriteInt(i*2,menu[i].value);
-      }
-      usb_start=false;
-      set_rng_running(false);
-    } else if (inChar == 'x'){
-      usb_start=false;
-      set_rng_running(false);
-      digitalWrite(MOTOR_STEP_PIN, LOW);
-    } else {
-      // Unknown input is not a mode: discard stale RUN and output state.
-      usb_start=false;
-      set_rng_running(false);
-      digitalWrite(MOTOR_STEP_PIN, LOW);
+  case 9: {
+    // Bounded, nonblocking input. STOP events are processed before any STEP.
+    uint8_t budget=32;
+    while (budget && Serial.available()) {
+      --budget;
+      if (usbDropUntilEmpty) { (void)Serial.read(); continue; }
+      perpompa_usb::Event e=usbParser.feed((uint8_t)Serial.read(),millis());
+      if (e.kind!=perpompa_usb::kNone) usbApplyEvent(e);
     }
-  }
-  
+    if (usbDropUntilEmpty && !Serial.available()) usbDropUntilEmpty=false;
+    if (Serial.available()) {
+      // Fail closed on excess queued data; discard across future loops.
+      usbParser.reset(); usbDropUntilEmpty=true; hwForceIdle(); inChar=0;
+    }
+    // Process UART input before quiet completion. An already-queued STOP or
+    // late final digit must never be overtaken by a stale timeout event.
+    if (!usbDropUntilEmpty && !Serial.available()) {
+      perpompa_usb::Event idleEvent=usbParser.tick(millis());
+      if (idleEvent.kind!=perpompa_usb::kNone) usbApplyEvent(idleEvent);
+    }
+
+
   if (usb_start) {
     if ((inChar == 'p' && (delay_us < 4 || delay_us > 16000)) ||
         (inChar == 'd' && (steps <= 0 || delay_us < 4 || delay_us > 16000))) {
@@ -474,6 +455,7 @@ if (in_action){
     }
   }
   break;
+  }
 }
 
 /// MENU (no action) ////////////////////////////////////////////////////////////////////////////////
@@ -584,6 +566,47 @@ void set_rng_running(bool running){
 }
 
 //_____________________________________________________________________________________________
+
+void usbApplyEvent(const perpompa_usb::Event &e){
+  switch(e.kind){
+    case perpompa_usb::kNone: return;
+    case perpompa_usb::kPending:
+    case perpompa_usb::kStop:
+    case perpompa_usb::kReject:
+      hwForceIdle(); inChar=0; step_counter=0; return;
+    case perpompa_usb::kCalibrate:
+      hwForceIdle(); inChar='c'; step_counter=0; usb_start=true; return;
+    case perpompa_usb::kPump: {
+      if(e.value[0]<=0 || e.value[1]<0 || e.value[1]>20000) {
+        hwForceIdle(); inChar=0; return;
+      }
+      int calibration=(int)(e.value[1] ? e.value[1] : menu[7].value);
+      long d=delay_us_calc(e.value[0],1,calibration,0);
+      if(d<4 || d>16000){hwForceIdle();inChar=0;return;}
+      hwForceIdle();rate_uL_min=e.value[0];cal=calibration;delay_us=d;
+      inChar='p'; step_counter=0;usb_start=true; return;
+    }
+    case perpompa_usb::kDose: {
+      if(e.value[0]<=0 || e.value[1]<=0 || e.value[2]<0 || e.value[2]>20000){
+        hwForceIdle();inChar=0;return;
+      }
+      int calibration=(int)(e.value[2] ? e.value[2] : menu[7].value);
+      long stepCount=steps_calc(e.value[0],1,calibration,0);
+      long d=delay_us_calc(e.value[1],1,calibration,0);
+      if(stepCount<=0 || d<4 || d>16000){hwForceIdle();inChar=0;return;}
+      hwForceIdle();vol_uL=e.value[0];rate_uL_min=e.value[1];cal=calibration;
+      steps=stepCount;delay_us=d;inChar='d';step_counter=0;usb_start=true;return;
+    }
+    case perpompa_usb::kWriteCalibration:
+      // Preserve legacy w persistence while rejecting invalid calibration.
+      hwForceIdle();inChar=0;
+      if(e.value[0]<=0 || e.value[0]>menu[7].lim)return;
+      cal=(int)e.value[0];menu[7].value=cal;
+      for(int i=0;i<11;i++)eepromWriteInt(i*2,menu[i].value);
+      return;
+  }
+  hwForceIdle(); inChar=0;
+}
 
 void hwForceIdle(){digitalWrite(MOTOR_STEP_PIN,LOW);set_rng_running(false);usb_start=false;}
 
@@ -707,6 +730,8 @@ void pump(int _delay_us) {
 //_____________________________________________________________________________________________
 
 void exit_action_menu(){
+   usbParser.reset();
+   usbDropUntilEmpty=false;
    set_rng_running(false);
    // Leaving USB/Start actions must discard stale run state.
    usb_start = false;
