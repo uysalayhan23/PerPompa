@@ -96,3 +96,13 @@ Kullanıcı Windows PowerShell + Arduino CLI + AVR kart/kütüphaneleriyle aday�
 
 **Durum:** Kaynağa dayalı üreticinin JavaScript sözdizimi PASS, 4 fonksiyon ve 3 aday yaması ayrıştırılabilir; **üretilen tam C++ dosyasının gerçek native derlemesi/çalıştırması henüz NOT_RUN**. Test aracının varlığını PASS sayma. P0-01 aday için Windows Arduino 2/2 AVR derleme PASS korunur. Üretim firmware .ino değişmedi ve endüstriyel RELEASE_BLOCKED.
 
+
+## 2026-10-31 — Gerçek tam setup/loop C++ simülasyonu
+
+**Kaynak/girdi:** Baseline v1.05 `.ino` Git blob `0d965c08947ba0b3170d22fbff806fc2e6f1e83a`, `tests/p0-01-candidate-dual-build.cjs` ile üretilen **geçici P0-01 adayı**, tam `setup()`, `loop()` ve kalan .ino fonksiyonları; fiziksel cihaz yerine C++ LCD/encoder/EEPROM/Serial/Remote/GPIO sahte çevrebirimleri.
+
+**Yerel koşu, g++ C++17 / UBSan + float-cast-overflow:** İlk tam kaynak testinde `#include` satırlarını temizleyen **test aracı** yanlışlıkla satır sonu yorum parçalarını bıraktığından C++ derlemesi başarısızdı; `#include` satırını tümüyle kaldıracak hedefli test aracı onarımı uygulandı. **Derlenip çalıştırılan tam kaynak C++ simülasyonunda `FULL_SETUP_LOOP_HOST_CPP=22/22 PASS`** ve **iki önceden bilinen risk `KNOWN_RISK_REPRODUCTIONS=2/2` olarak yeniden üretildi**. Pozitif/negatif koşular: Dose/Pump/Cal (Cal 24.000 mikro-adım), yerel STOP, Remote Hold/Pulse debounce/STOP, USB p/d/c/x, sıfır/eksi giriş, RNG/STEP yanlış-pozitif yokluğu. İlk sürümde 24/24 görünen sayı, **22 davranış PASS + iki kusur yeniden üretimi** olarak dürüst biçimde ayrıldı. Kaynak C++ programının doğrudan host derlemesi yapıldı; fiziksel AVR üzerinde yürütüm değildir.
+
+**Açık kaynak kusurları:** R-001 Hold + LOW güç açılışında istemsiz çalıştırma; R-007 USB etkin adımlama sonrası tanınmayan byte durumunda `usb_start` ve RNG açık kalması. İki kusur da otomatik iyileşme veya PASS değildir. Bu nedenle `P0-01=BLOCKED`; `FULL_SETUP_LOOP_HOST_CPP` seçili kontroller PASS ama bütün endüstriyel güvenlik kabulü **FAIL/REVIEW**, `HW_BENCH/HW_PUMP=NOT_RUN`, `RELEASE_BLOCKED`. Önceki `AVR_COMPILE(CANDIDATE)=2/2 PASS` ve `SOURCE_EXTRACTED_BRANCH_HOST_CPP=42/42 PASS` korunur; **üretim .ino'ya yama gönderilmedi**.
+
+**Sıradaki iş:** R-001 açılış emniyeti ve R-007 USB / RUN durum makinesi için manifest önceliğinde kaynak-kanıtlı minimal onarım ve tam USB/Remote negatif regresyon; ayrıca gerçek stop gecikmesi/ürün kabulü ayrıdır. Onarımın kendi gerçek AVR derlemesi ve kaynak regresyonu olmadan P0-01'i COMPLETE ilan etme veya HW menüsüne geçme.
