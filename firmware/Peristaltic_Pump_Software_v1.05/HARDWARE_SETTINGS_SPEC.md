@@ -1,5 +1,5 @@
 # PerPompa v1.05 — Kurulum Donanım Ayarları Tasarımı
-**Kayıt:** 2026-10-31 | **Durum:** SPEC + HOST_CPP_MODEL_PASS; UI/firmware UYGULANMADI | **Bağlı:** P0-01 ve endüstriyel release kapıları
+**Kayıt:** 2026-10-31 | **Durum:** SPEC + gerçek bağımsız profil header HOST_CPP 125/125 × 8/16 MHz PASS; UI/aktif firmware entegrasyonu UYGULANMADI | **Bağlı:** HW-SETUP-01B, P0-02 ve endüstriyel release kapıları
 
 ## Sürücü tercihi — kullanıcı kararı (2026-10-31)
 
@@ -54,3 +54,7 @@
 
 ## Görev ve teslim politikası
 **Şu an yalnız tasarım/test modeli**; aktif .ino, v1.04 arşivi, kilitli manifest ve AGENTS.md değişmedi. P0-01'in kaynak+tam AVR derleme ve motor güvenlik kapıları sağlanmadan ayar menüsü firmware revizyonunu main'e alma. Endüstriyel RELEASE_BLOCKED korunur.
+
+### Yeni kaynak durumu — 2026-10-31
+
+`hw-setup-profile.h` bağımsız, henüz aktif `.ino` içinden çağrılmayan doğrulayıcıdır; `tests/hw-setup-profile-native.cpp` g++/UBSan ile iki F_CPU profilinde 125'er pozitif-negatif kontrol PASS gösterdi. Eski EEPROM 0..21 korunur; 32/48 önerilen yeni slotlar **henüz firmware'de kullanılmıyor**. `INTEGRATION/AVR_FOR_HW_SETUP/HW_BENCH=NOT_RUN`. Kullanıcı açık onaylı fiziksel sürücü/board uyumu ve kart üzeri güvenlik testleri olmadan motorun emniyetli olduğu iddia edilmez.

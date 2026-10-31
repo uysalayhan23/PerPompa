@@ -150,3 +150,23 @@ Tek komut (repo ZIP kökünde, Node ve native g++ ve Arduino CLI kurulu ise):
 **Yeni QA akışı:** kabul edilen aktif `.ino` blobunda `tests/p0-01-one-shot-qa.cjs`, `tests/p0-01-accepted-source-qa.cjs` dosyasına yönlenir; doğrudan aktif kaynak için gerçek setup/loop 32, tarihsel v1.04+P0-01 adayı için 42 ve doğrudan aktif kaynak için Arduino 16/8 MHz derlemesi zorunludur. Eski baseline modu korunur. Yeni test yolunun JS syntax ve sahte başarı/FAIL enjekte edilen fail-closed kontrolü PASS; **post-merge gerçek g++/Arduino tekrar koşusu NOT_RUN** (önceki gerçek *aynı blob aday* Windows koşuları PASS).
 
 **Sonraki tek aktif görev:** kullanıcı talebiyle A4988 ilk öneri, DRV8825 alternatif `HW Setup` için `HARDWARE_SETTINGS_SPEC.md` bazlı EEPROM sürümleme, konfigürasyon onayı ve `F_CPU` uyuşma güvenlik kapısını test-öncelikli tasarla. Menüyü gerekli ayrı native+AVR kapıları olmadan aktive etme. R0 P0-02 stop latency değerlendirmesi ve P0-03 USB `w`/bozuk paket analizi öncelikli REVIEW olarak kalır.
+
+
+## 2026-10-31 — HW-SETUP-01: doğrulanmış *bağımsız* kurulum profili bileşeni
+
+**Base main:** `6fab83a24e2cb53841361c37f28c26b72be62131`; **kilitli kabul edilmiş P0-01 .ino blob:** `6617cc38bde9bddf1c32cd0506915c0054556127` (dokunulmadı). Kilitli v1.04, AGENTS ve manifesto değişmedi.
+
+**Gerçek eklenen kaynak:** [hw-setup-profile.h](hw-setup-profile.h) — doğrudan Arduino uyumlu C++11 header, *aktif v1.05 .ino tarafından henüz include/çağrılmıyor*. A4988 yalnız ilk öneri, bilinmeyen board/onaysız sürücü motor izni değil; DRV8825 alternatif; geçerli 16MHz/8MHz profile ve doğru F_CPU olmadan motor izin mantığı false; 1/4 mikro-adım sabit; motor/Remote/USB aktifken kurulum onayı yok. Board/driver değişimi eski onayı geçersiz kılar; sürücü tipini ve gerçek saat/gerilimi otomatik algılamaz.
+
+**EEPROM:** V1.04 eski 0–21 adresleri değiştirilmedi. Yalnız veri modeli olarak 32 ve 48 adreslerinde iki 12 baytlık sürümlü slot; CRC-8 + tamamlayıcı bayt + son-yazılacak commit marker; enerji kesintisi sırasında yarım kayıt reddedilir, önceki sağlam kayıt geri yüklenir; iki geçerli slotta seq modulo 256, eşit nesil/çelişkili içerik ve 128 uzaklığı fail-closed. **EEPROM gerçek write/read firmware entegrasyonu NOT_RUN**; geliştirici açıkça `encodePending` çıktısının commit baytını en son yazmalı. Önceki sürücü fiziken değiştirilirse eski kayıt hâlâ geçerli görünebileceğinden yeni donanımın gerçek teyidi ve fiziksel çalışma engeli ayrıca zorunludur.
+
+**Yeni pozitif-negatif native QA:** [tests/hw-setup-profile-native.cpp](tests/hw-setup-profile-native.cpp), doğrudan bu gerçek header'ı include eder; [tests/hw-setup-native-gate.cjs](tests/hw-setup-native-gate.cjs) derler/çalıştırır. Yerel g++ 14.2.0 C++11 `-Wall -Wextra -Werror -pedantic -fsanitize=undefined`:
+- `HW_SETUP_NATIVE_FCPU_16000000=125/125 PASS`
+- `HW_SETUP_NATIVE_FCPU_8000000=125/125 PASS`
+- `HW_SETUP_NATIVE_TWO_CPU_PASS=2/2`
+- Boş/bozuk/CRC'si yeniden hesaplanmış geçersiz EEPROM, eksik kullanıcı onayı, F_CPU uyuşmazlığı, sürücü değişimi, ayar sırasında motor/Remote/USB aktifliği, power-loss partial writes, sürüm hatası, nesil wrap/ambiguous/replay ve eski onaylı kaydın üstündeki yeni onaysız kayıt pozitif-negatif kontrolleri dahil.
+- Negatif test duyarlılığı: güvenlik CPU eşleşmesi kasıtlı atlanan **yalnız geçici mutant** C++11 başarıyla derlendi, kontrol `HW_SETUP_HOST_FAIL unknown CPU always blocked` ile exit 1 döndürdü. Mutant GitHub'a aktarılmadı.
+
+**Gerçek kabul sınırı:** `HW_SETUP_PROFILE_HEADER_HOST_CPP=125/125 × 2 PASS`, `FW_INTEGRATION=NOT_RUN`, `NEW_AVR_COMPILE=NOT_RUN`, `EEPROM_HARDWARE=NOT_RUN`, `HW_BENCH/HW_PUMP=NOT_RUN`, `USER_ACCEPTANCE=NOT_RUN`, endüstriyel `RELEASE_BLOCKED`. 125 testin hiçbiri aktif v1.05 .ino üzerinde kurulum menüsünün çalıştığını göstermez; çalışan P0-01 .ino değiştirilmedi. P0-01 32/32 + 42/42 + AVR 2/2 önceki PASS kanıtları yeniden koşulmadı.
+
+**Sıradaki adım:** HW-SETUP-01B — profil başlatma/EEPROM güvenli-yazma adaptörü, motor START noktalarında merkezi yetki kapısı ve 16×2 LCD kurulum akışı; yalnız kaynaklı gerçek setup/loop pozitif-negatif + 8/16MHz Arduino gerçek derlemesi PASS olduktan sonra bu entegrasyonu üretim .ino'ya ekle. P0-02 stop latansı ve tüm G01–G10/HW RELEASE REVIEW/HOLD kilitlerini koru.
