@@ -47,4 +47,4 @@ G01–G10 ürün release kapıları [INDUSTRIAL_RELEASE_GATE.md](INDUSTRIAL_RELE
 ### HW-01 sürücü önceliği (2026-10-31)
 - Sürücü menüsünde A4988 ilk öneri, DRV8825 ikinci seçenektir; ikisi de desteklenmeye devam eder.
 - A4988 ön seçimi boş EEPROM/ilk kurulumda otomatik motor izni sayılmaz. DRV8825'e geçişte onay yeniden alınır.
-- Bağımsız C++ modeline bu dört ilave negatif/pozitif test yazıldı. **Bu ilave testler henüz çalıştırılmadı (NOT_RUN)**; dört fiziksel profil ve gerçek AVR/Arduino doğrulaması hâlâ NOT_RUN.
+- Bağımsız C++ modeline bu beş ilave pozitif/negatif test yazıldı. **Kaynakla aynı SHA değerine sahip host C++ sürümü 24/24 PASS (g++ -std=c++17, -Wall/-Wextra/-Werror/-pedantic, ASan+UBSan); bu Arduino firmware ya da donanım testi değildir**; dört fiziksel profil ve gerçek AVR/Arduino doğrulaması hâlâ NOT_RUN.

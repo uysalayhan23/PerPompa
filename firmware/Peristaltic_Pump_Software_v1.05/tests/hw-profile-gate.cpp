@@ -9,7 +9,8 @@ struct Profile {
  Board board; Driver driver; uint8_t microsteps;
  bool storedWithValidMarker; bool commissioningConfirmed;
 };
-constexpr bool validDriver(Driver d){return d==Driver::A4988 || d==Driver::DRV8825;}\nconstexpr Driver suggestedDriver(){return Driver::A4988;} // UI proposal only; never marks EEPROM confirmed
+constexpr bool validDriver(Driver d){return d==Driver::A4988 || d==Driver::DRV8825;}
+constexpr Driver suggestedDriver(){return Driver::A4988;} // UI proposal only; never marks EEPROM confirmed
 constexpr bool validBoard(Board b){return b==Board::ProMini5V16MHz || b==Board::ProMini3V3_8MHz;}
 constexpr unsigned pulseWidthMicroseconds(Driver d){return validDriver(d) ? 2u : 0u;}
 constexpr bool safeToStart(const Profile& p, unsigned long compileTimeFcpu, bool motorIdle, bool remoteIdle){
