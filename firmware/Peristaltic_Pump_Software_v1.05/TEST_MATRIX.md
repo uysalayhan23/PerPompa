@@ -48,3 +48,8 @@ G01–G10 ürün release kapıları [INDUSTRIAL_RELEASE_GATE.md](INDUSTRIAL_RELE
 - Sürücü menüsünde A4988 ilk öneri, DRV8825 ikinci seçenektir; ikisi de desteklenmeye devam eder.
 - A4988 ön seçimi boş EEPROM/ilk kurulumda otomatik motor izni sayılmaz. DRV8825'e geçişte onay yeniden alınır.
 - Bağımsız C++ modeline bu beş ilave pozitif/negatif test yazıldı. **Kaynakla aynı SHA değerine sahip host C++ sürümü 24/24 PASS (g++ -std=c++17, -Wall/-Wextra/-Werror/-pedantic, ASan+UBSan); bu Arduino firmware ya da donanım testi değildir**; dört fiziksel profil ve gerçek AVR/Arduino doğrulaması hâlâ NOT_RUN.
+
+### P0-01 Arduino derleme kapısı — 2026-10-31
+
+Yeni [tests/dual-arduino-build-gate.cjs](tests/dual-arduino-build-gate.cjs) iki gerçek hedefi zorunlu kontrol eder: \`arduino:avr:pro:cpu=16MHzatmega328\` ve \`arduino:avr:pro:cpu=8MHzatmega328\`. Arşiv SHA sabit, geçici build dizini, otomatik Actions veya firmware yükleme yok. Arduino CLI eksikse FAIL/NOT_RUN. **Bu oturumda Arduino CLI/avr-g++ yok; AVR_ARDUINO_BUILD=NOT_RUN, P0-01 firmware main commit yapılamaz.** Çalıştırılabilir test altyapısının bulunması, derlemenin geçtiği anlamına gelmez.
+
