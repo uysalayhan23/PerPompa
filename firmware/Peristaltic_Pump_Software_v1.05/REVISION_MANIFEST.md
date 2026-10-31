@@ -1,5 +1,5 @@
 # PerPompa v1.05 — Sabit Revizyon ve Kabul Manifestosu
-**Manifest sürümü:** 1.0 | **Tarih:** 2026-10-31 | **Yetkili çalışma dalı:** `main`
+**Manifest sürümü:** 1.1 | **Tarih:** 2026-10-31 | **Yetkili çalışma dalı:** `main`
 **Kapsam:** Yalnız `firmware/Peristaltic_Pump_Software_v1.05/` ve ona ait test/dokümanlar.
 **Durum:** ACTIVE POLICY; bu dosya kendi başına hiçbir firmware fonksiyonunu PASS yapmaz.
 
@@ -10,6 +10,17 @@ Her yeni oturum ilk işlem olarak **canlı** `main` HEAD'i, bu `REVISION_MANIFES
 ## Politika dosyalarının sabitlenmesi
 
 **REVISION_MANIFEST.md ve kök AGENTS.md politika kilidindedir.** Kullanıcının bu iki dosyada açıkça onayladığı bir değişiklik olmadan kurallar gevşetilemez, kaldırılamaz, taşınamaz veya yeniden yazılamaz. Normal geliştirme sırasında sadece kanıta göre `NEXT_TASK.md` ve `TEST_MATRIX.md` güncellenir; bu güncellemeler politika istisnası oluşturamaz. GitHub `main` şu anda sunucu tarafı korumalı dal değildir; bu politika sürece ve kontrol kapısına dayanır, GitHub yöneticilerinin dosyaları teknik olarak değiştirmesini engelleyen bir yetki kısıtlaması değildir.
+
+## Ana çalışma çizgisi — kesintisiz kanıtlı revizyon döngüsü (kullanıcı onayı, 2026-10-31)
+
+**Tespit et → kaynakta en küçük güvenli onarımı yap → özgün kaynakla pozitif/negatif + regresyon test et → yalnız ilgili kabul kapıları PASS ise [skip ci] ile main'e teslim et, uzak HEAD/blob SHA doğrula → sıradaki en yüksek öncelikli açık göreve geç.** Bu tüm yeni sohbetlerde ve uzman incelemelerinde esas iş yapma sırasıdır.
+
+- Çalışma çıktı odaklıdır: her ara bulgu için ayrı uzun rapor yok; bir oturumda mümkün olan ardışık güvenli iş paketleri bitirilir. Nihai teslim yalnız değiştirilen gerçek dosya, ölçülen test türü/sonucu, uzak SHA, açık engel ve sonraki görevi kısaca bildirir. Yanıt vermek arka planda iş başlatmaz.
+- Kaynakta düzeltilmemiş risk `PASS` ilan edilemez. Kusurun gerçek kaynağını kanıtlayamıyorsan yalnız kayıt aç. Güvenli ve test edilmiş gerçek kaynak yaması olmadan salt raporu "düzeltme" sayma.
+- **Kalite kapısı vazgeçilmez:** Test yapılamıyorsa veya derleme kanıtı eksikse firmware yamasını main'e gönderme. Sorunu açıkça `BLOCKED/NOT_RUN` olarak kaydet; gerekli test altyapısını/kanıtlarını veya bağımsız güvenli sonraki işi ilerlet. Kontrolsüz kod aktarımıyla "devam" hedefi gerçekleştirilemez.
+- İş sırasını A02 emniyet ve A09 sürüm incelemesi denetler; risk önceliği `R0 kontrolsüz start/stop/safe-state > R1 yanlış dozaj/hız/yön > R2 kullanılabilirlik > R3 kozmetik`. Tek seferde bir kaynak revizyonu; bağımsız test ve belgeler paralel hazırlanabilir.
+- Ticari ürün için `RELEASE_BLOCKED` kilidi, [INDUSTRIAL_RELEASE_GATE.md](INDUSTRIAL_RELEASE_GATE.md) G01–G10 fiziksel/uygunluk kanıtları gelene kadar korunur. Host C++ test sonucu gerçek kart ya da ticari uygunluk değildir.
+- Arşiv, geçerli sürüm davranışı, pinler, encoder/LCD, Remote/RNG kilitleri ve politika belgelerini gevşetme. Bu bölümü değiştirmek için kullanıcıdan yeni açık izin gerekir.
 
 ## 1. Değişmez referans ve kapsam kilitleri
 

@@ -24,3 +24,9 @@
 ## Endüstriyel kabul uzantısı (2026-10-31)
 
 G01–G10 ürün release kapıları [INDUSTRIAL_RELEASE_GATE.md](INDUSTRIAL_RELEASE_GATE.md) içinde takip edilir; bu test matrisi bunların yerine geçmez. [RISK_REGISTER.md](RISK_REGISTER.md) R-001–R-012 her test alanının neden gerekli olduğunu gösterir. HOST_CPP test hazırlığı [tests/native-math-harness.cjs](tests/native-math-harness.cjs) dosyasındadır: **2026-10-31 host izole hesap fonksiyonu denemesi ve koşu sonuçları HOST_CPP_EVIDENCE.md içindedir; AVR_COMPILE ve HW_* tümü NOT_RUN.** Bir test aracının varlığı PASS değildir.
+
+## 2026-10-31 P0-01 test-first güncellemesi
+
+- `HOST_CPP` özgün hesap fonksiyonu: 4 normal PASS; sıfır cal ve sıfır hız için 2 sanitizer hata reproduksiyonu; negatif hız ve 16 bit alt-dilimi sınırları ayrı REVIEW.
+- İzole geçici **aday** C++: 4 normal + 16 negatif + 3098 geçerli değer paritesi PASS. Aday sonuçları özgün kaynak düzeltmesi veya motor çıkışı kabulü değildir. Detay [P0_01_CANDIDATE.md](P0_01_CANDIDATE.md).
+- `AVR_COMPILE`, `FULL_FIRMWARE_NATIVE`, `HW_BENCH`, `HW_PUMP`: **NOT_RUN**. `P0-01` firmware değişikliği **BLOCKED**, üretim sürümü **RELEASE_BLOCKED**.
