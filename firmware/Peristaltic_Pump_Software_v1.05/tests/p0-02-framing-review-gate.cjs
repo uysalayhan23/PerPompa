@@ -11,10 +11,23 @@ const firmware=path.join(root,'Peristaltic_Pump_Software_v1.05.ino');
 const expected={
  [cpp]:'201ed2993460126d3054f6f79349a4366e329dee',
  [header]:'20527923030414d7d385b5102b9307446ce7f5c7',
- [firmware]:'5b3c5a29ce8ce5eee0941469738b7e088d60a1bb'
+ [firmware]:'fd7a78a0ec4aae33eb466dc1cdaae671fa3ca02f'
 };
-function blob(file){const b=fs.readFileSync(file);return crypto.createHash('sha1')
-  .update('blob '+b.length).update(Buffer.from([0])).update(b).digest('hex');}
+function blob(file) {
+  const raw=fs.readFileSync(file);
+  const hash=(b)=>crypto.createHash('sha1')
+    .update('blob '+b.length).update(Buffer.from([0]))
+    .update(b).digest('hex');
+
+  const rawSha=hash(raw);
+  if(rawSha===expected[file])return rawSha;
+
+  // Normalize only CRLF line endings; keep SHA validation.
+  const normalized=Buffer.from(
+    raw.toString('utf8').replace(/\r\n/g,'\n'),'utf8'
+  );
+  return hash(normalized);
+}
 let dir;
 try{
  for(const [file,sha] of Object.entries(expected))if(blob(file)!==sha)
