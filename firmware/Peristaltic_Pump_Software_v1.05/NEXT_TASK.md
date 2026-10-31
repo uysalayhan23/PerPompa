@@ -30,7 +30,7 @@ Güncel kaynak `main` başlangıç HEAD `e6875170ae886e750bdaf70c84428e9484b5c3e
 
 ## Yeni donanım kurulum talebi — HW-01 (kullanıcı, 2026-10-31)
 
-**İstenen seçenekler:** Arduino Pro Mini **5 V/16 MHz** veya **3.3 V/8 MHz**; sürücü **A4988** veya **DRV8825** (kullanıcının "DRV88225" yazımı DRV8825 olarak yorumlandı). Kullanıcı kurulum sırasında menüden seçecek; bu seçim **fiziksel clock/voltajı değiştirmez**, eşleşen iki ayrı `F_CPU` derlemesi gerektirir. Sürücü/mikrostep otomatik algılanmaz.
+**Tercih (kullanıcı, 2026-10-31):** A4988 ana/önerilen sürücü, DRV8825 ara sıra kullanılan alternatif. İlk gösterilen sürücü seçeneği A4988 olacak; kullanıcı fiziksel sürücüyü teyit edene kadar motor kilidi açılmayacak. Sürücü değiştirilince kurulum onayı yenilenmeli. Bu bir tasarım kararıdır, aktif firmware'e henüz uygulanmadı.\n\n**İstenen seçenekler:** Arduino Pro Mini **5 V/16 MHz** veya **3.3 V/8 MHz**; sürücü **A4988** veya **DRV8825** (kullanıcının "DRV88225" yazımı DRV8825 olarak yorumlandı). Kullanıcı kurulum sırasında menüden seçecek; bu seçim **fiziksel clock/voltajı değiştirmez**, eşleşen iki ayrı `F_CPU` derlemesi gerektirir. Sürücü/mikrostep otomatik algılanmaz.
 
 - **Tasarım/tekrar edilebilir kaynak:** [HARDWARE_SETTINGS_SPEC.md](HARDWARE_SETTINGS_SPEC.md)
 - **Host model:** [tests/hw-profile-gate.cpp](tests/hw-profile-gate.cpp); **19/19 HOST_CPP MODEL PASS** (g++17 ASan/UBSan). Bu gerçek firmware menüsü veya kart kabulü değildir.

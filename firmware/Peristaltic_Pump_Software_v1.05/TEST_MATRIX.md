@@ -43,3 +43,8 @@ G01–G10 ürün release kapıları [INDUSTRIAL_RELEASE_GATE.md](INDUSTRIAL_RELE
 - Pozitif: 5V/16MHz+A4988, 5V/16MHz+DRV8825, 3.3V/8MHz+A4988, 3.3V/8MHz+DRV8825; doğru Arduino hedef derlemesi ve cihazda güvenli başlangıç.
 - Negatif: yanlış `F_CPU`, eski/boş/bozuk EEPROM, geçersiz sürücü, kaydedilmemiş kurulum, 1/4 dışı mikro-step, motor/Remote aktifken ayar değiştirme. STEP çıkışı ve RNG idle kriterleri.
 - Host `tests/hw-profile-gate.cpp`: **19/19 PASS** (yalnız bağımsız konfigürasyon mantığı modelidir); gerçek LCD/encoder/EEPROM/AVR firmware ve donanım **NOT_RUN**. Kaynak: [HARDWARE_SETTINGS_SPEC.md](HARDWARE_SETTINGS_SPEC.md).
+
+### HW-01 sürücü önceliği (2026-10-31)
+- Sürücü menüsünde A4988 ilk öneri, DRV8825 ikinci seçenektir; ikisi de desteklenmeye devam eder.
+- A4988 ön seçimi boş EEPROM/ilk kurulumda otomatik motor izni sayılmaz. DRV8825'e geçişte onay yeniden alınır.
+- Bağımsız C++ modeline bu dört ilave negatif/pozitif test yazıldı. **Bu ilave testler henüz çalıştırılmadı (NOT_RUN)**; dört fiziksel profil ve gerçek AVR/Arduino doğrulaması hâlâ NOT_RUN.

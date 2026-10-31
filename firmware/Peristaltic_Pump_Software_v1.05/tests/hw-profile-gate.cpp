@@ -9,7 +9,7 @@ struct Profile {
  Board board; Driver driver; uint8_t microsteps;
  bool storedWithValidMarker; bool commissioningConfirmed;
 };
-constexpr bool validDriver(Driver d){return d==Driver::A4988 || d==Driver::DRV8825;}
+constexpr bool validDriver(Driver d){return d==Driver::A4988 || d==Driver::DRV8825;}\nconstexpr Driver suggestedDriver(){return Driver::A4988;} // UI proposal only; never marks EEPROM confirmed
 constexpr bool validBoard(Board b){return b==Board::ProMini5V16MHz || b==Board::ProMini3V3_8MHz;}
 constexpr unsigned pulseWidthMicroseconds(Driver d){return validDriver(d) ? 2u : 0u;}
 constexpr bool safeToStart(const Profile& p, unsigned long compileTimeFcpu, bool motorIdle, bool remoteIdle){
@@ -25,6 +25,16 @@ int main(){
  Profile b{Board::ProMini5V16MHz, Driver::DRV8825, 4, true, true};
  Profile c{Board::ProMini3V3_8MHz, Driver::A4988, 4, true, true};
  Profile d{Board::ProMini3V3_8MHz, Driver::DRV8825, 4, true, true};
+ Profile suggested{Board::ProMini5V16MHz,suggestedDriver(),4,false,false};
+ assert(check(suggestedDriver()==Driver::A4988,"A4988 recommended display default"));
+ assert(check(!safeToStart(suggested,16000000ul,true,true),"suggestion must not authorize startup"));
+ suggested.storedWithValidMarker=true;
+ assert(check(!safeToStart(suggested,16000000ul,true,true),"unconfirmed default remains locked"));
+ suggested.commissioningConfirmed=true;
+ assert(check(safeToStart(suggested,16000000ul,true,true),"confirmed physical A4988 may start"));
+ suggested.driver=Driver::DRV8825;
+ suggested.commissioningConfirmed=false; // commissioning must be invalidated on physical driver switch
+ assert(check(!safeToStart(suggested,16000000ul,true,true),"driver switch requires reconfirmation"));
  assert(check(safeToStart(a,16000000ul,true,true),"16MHz A4988 valid"));
  assert(check(safeToStart(b,16000000ul,true,true),"16MHz DRV8825 valid"));
  assert(check(safeToStart(c,8000000ul,true,true),"8MHz A4988 valid"));

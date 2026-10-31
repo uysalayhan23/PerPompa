@@ -1,6 +1,14 @@
 # PerPompa v1.05 — Kurulum Donanım Ayarları Tasarımı
 **Kayıt:** 2026-10-31 | **Durum:** SPEC + HOST_CPP_MODEL_PASS; UI/firmware UYGULANMADI | **Bağlı:** P0-01 ve endüstriyel release kapıları
 
+## Sürücü tercihi — kullanıcı kararı (2026-10-31)
+
+- **Önerilen ilk kurulum seçimi: A4988.** Kullanıcı genellikle bunu kullanır. Yeni kurulum menüsü sürücü satırında ilk olarak `Driver: A4988` gösterebilir; bu yalnız **öneridir**, aktif/teyitli donanım bilgisi değildir.
+- **Alternatif: DRV8825.** Bazen kullanılır; menüde görünür kalır, aynı test ve kabul ciddiyetiyle desteklenir. Bu seçenek ikinci sırada listelenir; hiçbir işlev koddan çıkarılmaz.
+- **Güvenli ilk çalıştırma:** A4988 gösteriliyor olsa bile kullanıcı kart + sürücü + 1/4 mikro-adım eşleşmesini *açıkça onaylamadan* EEPROM yapılandırması geçerli veya motor start izni verilmiş sayılmaz. Blank/bozuk EEPROM fail-closed kalır.
+- **Sürücü değişimi:** A4988 → DRV8825 veya tersi ancak motor dururken ve Remote/USB başlangıç etkisizken yapılır. Önceki kurulum onayı geçersiz sayılır; fiziksel kablo bağlantısı, MS modları, akım limiti, STEP zamanlaması ve seçili profil tekrar doğrulanıp kaydedilir. Önceki ayarın sessizce yeni sürücüye uygulanması yasak.
+- **Hesaplama:** Aynı fiziksel 1/4 mikro-adım ve aynı kalibrasyonla 800 STEP/devir korunur; A4988/DRV8825 adını değiştirince hacim veya debi formülü kendiliğinden değişmez. Fiziksel motor performansı ve minimum pulse/enable süreleri ayrıca ölçülmelidir.
+
 ## Kullanıcının istediği 4 kombinasyon
 
 | Arduino Pro Mini | Adım sürücüsü | Programlama profili | Saha doğrulaması |
@@ -15,7 +23,7 @@
 ## Hedef kullanıcı akışı (16×2 LCD)
 
 - Var olan Dose/Pump/Cal ve ana menü dizisini değiştirmeden yeni `HW Setup` / `Kurulum` alt menüsü.
-- `Board: 5V/16MHz` veya `Board: 3V3/8MHz`; `Driver: A4988` veya `Driver: DRV8825`.
+- `Board: 5V/16MHz` veya `Board: 3V3/8MHz`; `Driver: A4988` (öncelikli öneri) veya `Driver: DRV8825` (alternatif). İlk öneri onay yerine geçmez.
 - `Microstep: 1/4` şimdilik **bilgilendirme/sabit seçim**; geçerli `STEP_MODE=4`. Başka mikro-adım modu yapılacaksa hem kart/sürücü donanımı hem tüm dose/speed hesabı birlikte değiştirilip yeniden kalibre edilmelidir.
 - `Save + Confirm`: motor duruyorken, Remote ve USB komutları etkisizken kurulumu kullanıcı onayıyla kalıcı kaydet. EEPROM boş, eski veya bozuksa "kurulum gerekli" ve güvenli çalışmama hali.
 - Seçilen kart yazılımın `F_CPU` değerine uymuyorsa `Board mismatch` uyarısı; STEP yok, RNG idle. Seçilen sürücü/gerçek bağlantı eşleşmesi yazılımda sensör olmadığından doğrulanamaz; kullanıcı ve test fikstürü teyidi gerektirir.
