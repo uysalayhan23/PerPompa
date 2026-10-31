@@ -5,6 +5,12 @@
 **Temel sürüm:** v1.04 (`main`, başlangıç HEAD `b3b7b2fb859534ae2e7be5edb35da92c7f1cd690`)  
 **Konum:** `firmware/Peristaltic_Pump_Software_v1.05/`
 
+## Sabit revizyon kontrolü
+
+**Zorunlu belgeler:** [REVISION_MANIFEST.md](REVISION_MANIFEST.md) (değişmez koruma ve kabul şartları), [NEXT_TASK.md](NEXT_TASK.md) (tek aktif iş), [TEST_MATRIX.md](TEST_MATRIX.md) (modül bazlı pozitif-negatif regresyon) ve [kök AGENTS.md](../../AGENTS.md) (yeni oturum devralma).
+
+İlk aktif iş: **P0-01 test-first**. Kodu değiştirmeden referans testleri oluşturma ve doğrulama. Native/AVR ve gerçek cihaz kabulü henüz NOT_RUN; statik veya model sonuçları native PASS değildir.
+
 ## Sürümün oluşturulması
 
 Bu klasördeki `Peristaltic_Pump_Software_v1.05.ino` dosyası v1.04 kaynak dosyasının **değiştirilmemiş kopyasıdır**. Dosya adı v1.05 olarak düzenlenmiş, ancak kodun içeriği ve kontrol mantığı henüz değiştirilmemiştir. `firmware/archive/Peristaltic_Pump_Software_v1.04/` arşivlenmiş referans sürüm olarak korunur.
