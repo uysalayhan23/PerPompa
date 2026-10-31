@@ -1,0 +1,74 @@
+#!/usr/bin/env node
+'use strict';
+// Re-run accepted, SHA-locked HW Setup v1.05 full setup/loop on host
+// and compile exact active .ino for both AVR clocks. No board flashing.
+const fs=require('node:fs'),path=require('node:path'),os=require('node:os'),cp=require('node:child_process');
+const crypto=require('node:crypto');
+const acceptedGitBlob='04185aaa799b0af0bfa663b8acc8f5013a515066';
+const archivedGitBlob='0d965c08947ba0b3170d22fbff806fc2e6f1e83a';
+function gitBlob(file){const bytes=fs.readFileSync(file);return crypto.createHash('sha1').update('blob '+bytes.length).update(Buffer.from([0])).update(bytes).digest('hex');}
+function build(){
+ const pathToSketch=path.join(root,'Peristaltic_Pump_Software_v1.05.ino');
+ const archive=path.resolve(root,'..','archive','Peristaltic_Pump_Software_v1.04','Peristaltic_Pump_Software_v1.04.ino');
+ if(gitBlob(pathToSketch)!==acceptedGitBlob||gitBlob(archive)!==archivedGitBlob)throw Error('APPROVED_OR_ARCHIVE_BLOB_MISMATCH');
+ return fs.readFileSync(pathToSketch,'utf8');
+}
+const root=path.resolve(__dirname,'..');
+const tests="\nint approvedTests=0;\nvoid verify(bool yes,const char* label){\n if(!yes){std::fprintf(stderr,\"HW_SETUP_01D_FULL_FAIL %s\\n\",label);std::exit(3);}\n approvedTests++;\n}\nvoid tick(){loop();nowMs+=2;}\nvoid seedProfile(bool authorized){\n if(!authorized)return;\n perpompa_hw::Profile p={F_CPU==16000000UL?perpompa_hw::kProMini5V16MHz:perpompa_hw::kProMini3V3_8MHz,\n     perpompa_hw::kA4988,perpompa_hw::kRequiredMicrosteps,true};\n uint8_t buffer[perpompa_hw::kRecordLength];\n verify(perpompa_hw::encodePending(p,1,buffer),\"host profile encoding\");\n for(int i=0;i<11;i++)EEPROM.write(32+i,buffer[i]);\n EEPROM.write(43,perpompa_hw::kCommitMarker);\n EEPROM.write(64,perpompa_hw::kSetupArmed);\n}\nvoid fresh(bool authorized=false,bool remoteHigh=true,bool hold=false){\n if(encoder){delete encoder;encoder=nullptr;}\n EEPROM.reset();EEPROM.write(20,hold?0:1);EEPROM.write(21,0);\n seedProfile(authorized);\n std::memset(pins,0,sizeof(pins));pins[5]=remoteHigh?HIGH:LOW;pins[2]=HIGH;\n nowMs=200;elapsedUs=0;stepHighs=stepLows=0;Serial.reset();\n in_action=false;in_menu=false;menu_entered=false;menu_left=false;hwUiActive=false;\n rng_running=false;remote_started=false;usb_start=false;step_counter=0;\n encoder_hold_handled=false;encoder_button_pending=false;\n menu_number_1=0;menu_number_2=1;setup();\n}\nvoid click(){encoder->button=ClickEncoder::Clicked;tick();nowMs+=100;}\nvoid held(){encoder->button=ClickEncoder::Held;tick();nowMs+=100;}\nvoid rotate(int v){encoder->delta=v;tick();nowMs+=100;}\nint main(){\n fresh();verify(stepHighs==0&&!rng_running&&!in_action,\"blank boot inactive\");\n verify(EEPROM.read(64)!=perpompa_hw::kSetupArmed,\"blank EEPROM never armed\");\n menu_number_1=0;menu[6].value=1;delay_us=625;in_action=true;tick();\n verify(stepHighs==0&&!in_action&&!rng_running&&pins[7]==LOW,\"blank local pump denied\");\n fresh();menu_number_1=0;menu[6].value=2;in_action=true;tick();\n verify(stepHighs==0&&!in_action&&!rng_running,\"blank local calibration denied\");\n fresh();menu_number_1=9;in_action=true;Serial.inject(\"p1000 5000\");tick();\n verify(stepHighs==0&&!usb_start&&!rng_running,\"blank USB pump denied\");\n fresh();menu_number_1=9;in_action=true;Serial.inject(\"d10 1000 5000\");tick();\n verify(stepHighs==0&&!usb_start&&!rng_running,\"blank USB dose denied\");\n fresh();menu_number_1=9;in_action=true;Serial.inject(\"c\");tick();\n verify(stepHighs==0&&!usb_start&&!rng_running,\"blank USB cal denied\");\n fresh(false,true,true);menu[6].value=1;delay_us=625;\n pins[5]=LOW;tick();nowMs+=31;tick();\n verify(stepHighs==0&&!remote_started&&!rng_running,\"blank Remote Hold denied\");\n fresh(false,true,false);menu[6].value=1;delay_us=625;\n pins[5]=LOW;tick();nowMs+=31;tick();\n verify(stepHighs==0&&!remote_started&&!rng_running,\"blank Remote Pulse denied\");\n fresh(true);menu[6].value=1;delay_us=625;in_action=true;tick();\n verify(stepHighs==1&&rng_running,\"authorized local pump\");\n encoder->button=ClickEncoder::Clicked;tick();\n verify(!in_action&&!rng_running&&pins[7]==LOW,\"authorized local stop\");\n fresh(true);menu[6].value=0;steps=2;delay_us=625;in_action=true;\n tick();tick();verify(stepHighs==2&&rng_running,\"authorized dose two steps\");\n tick();verify(!in_action&&!rng_running,\"dose completion\");\n fresh(true);menu[6].value=2;in_action=true;\n for(int i=0;i<24001;i++)tick();\n verify(stepHighs==24000&&!in_action&&!rng_running,\"cal 24000 steps preserved\");\n fresh(true,true,true);menu[6].value=1;delay_us=625;\n pins[5]=LOW;tick();nowMs+=31;tick();\n verify(in_action&&remote_started,\"authorized remote hold starts\");\n tick();verify(stepHighs==1&&rng_running,\"authorized remote step\");\n pins[5]=HIGH;tick();nowMs+=31;tick();\n verify(!in_action&&!rng_running&&!remote_started,\"remote hold stop\");\n fresh(true);menu[6].value=1;delay_us=625;\n pins[5]=LOW;tick();nowMs+=31;tick();\n verify(in_action&&remote_started,\"authorized pulse starts\");\n pins[5]=HIGH;tick();nowMs+=31;tick();pins[5]=LOW;tick();nowMs+=31;tick();\n verify(!in_action&&!rng_running,\"authorized pulse stops\");\n fresh(true);menu_number_1=9;in_action=true;Serial.inject(\"p1000 5000\");tick();\n verify(stepHighs==1&&usb_start&&rng_running,\"authorized USB pump\");\n Serial.inject(\"x\");tick();verify(!usb_start&&!rng_running&&pins[7]==LOW,\"USB stop\");\n fresh(true);menu_number_1=9;in_action=true;Serial.inject(\"d10 1000 5000\");tick();\n verify(stepHighs==1&&rng_running,\"authorized USB dose\");\n fresh(true);menu_number_1=9;in_action=true;Serial.inject(\"c\");tick();\n verify(stepHighs==1&&rng_running,\"authorized USB cal\");\n EEPROM.write(64,0);tick();\n verify(stepHighs==1&&!usb_start&&!rng_running&&pins[7]==LOW,\"live inhibit cuts next USB step\");\n fresh(true);menu[6].value=1;delay_us=625;in_action=true;tick();\n EEPROM.write(32+9,EEPROM.read(32+9)^1);tick();\n verify(stepHighs==1&&!rng_running&&!in_action,\"CRC tamper cuts local pump\");\n fresh(false);menu_number_1=11;update_lcd();\n verify(lcd.lastPrint[0].size()==16&&lcd.lastPrint[1].size()==16,\"LCD fixed 16 columns\");\n verify(lcd.lastPrint[0].find(\"SETUP REQUIRED\")!=std::string::npos,\"LCD blank warns setup\");\n click();verify(hwUiActive&&hwSetup.editing()&&EEPROM.read(64)==0,\"click enters and inhibits\");\n verify(!in_action&&!rng_running&&stepHighs==0,\"setup entrance no motor pulse\");\n click();click();held();\n verify(hwUiActive&&!hwSetup.permit(perpompa_hw::kLocalPump,false),\"unselected board not confirmed\");\n encoder->button=ClickEncoder::DoubleClicked;tick();nowMs+=100;\n verify(!hwUiActive&&EEPROM.read(64)==0,\"cancel stays inhibited\");\n fresh(false);menu_number_1=11;click();\n rotate(F_CPU==16000000UL?1:-1);\n verify(hwSetup.draft().board==(F_CPU==16000000UL?0:1),\"encoder chooses matching board\");\n click();verify(hwSetup.page()==perpompa_hw::kDriverPage,\"encoder opens driver page\");\n rotate(-1);verify(hwSetup.draft().driver==perpompa_hw::kA4988,\"A4988 selection\");\n click();verify(hwSetup.page()==perpompa_hw::kConfirmPage,\"confirmation page\");\n const byte oldSetting0=EEPROM.read(0),oldSetting20=EEPROM.read(20);\n held();verify(!hwUiActive&&EEPROM.read(64)==perpompa_hw::kSetupArmed,\"long hold commits confirmed\");\n verify(EEPROM.read(0)==oldSetting0&&EEPROM.read(20)==oldSetting20,\"legacy EEPROM slots unchanged\");\n verify(hwSetup.permit(perpompa_hw::kLocalPump,false),\"confirmed permits start\");\n menu_number_1=11;update_lcd();verify(lcd.lastPrint[0].find(\"HW SETUP READY\")!=std::string::npos,\"LCD ready after commit\");\n fresh(true);menu_number_1=11;click();\n verify(hwUiActive&&EEPROM.read(64)==0,\"re-enter locks motor\");\n menu_number_1=0;menu[6].value=1;delay_us=625;in_action=true;tick();\n verify(stepHighs==0&&!rng_running&&!in_action,\"blocked during active edit\");\n\n fresh(true);menu[6].value=1;delay_us=625;in_action=true;EEPROM.readCount=0;tick();\n verify(stepHighs==1 && EEPROM.readCount==25,\"Local Pump exactly one full 25-byte permission scan\");\n fresh(true);menu[6].value=0;steps=1;delay_us=625;in_action=true;EEPROM.readCount=0;tick();\n verify(stepHighs==1 && EEPROM.readCount==25,\"Local Dose exactly one permission scan\");\n fresh(true);menu_number_1=9;in_action=true;Serial.inject(\"p1000 5000\");EEPROM.readCount=0;tick();\n verify(stepHighs==1 && EEPROM.readCount==25,\"USB Pump exactly one permission scan\");\n fresh(true);menu_number_1=9;in_action=true;Serial.inject(\"d10 1000 5000\");EEPROM.readCount=0;tick();\n verify(stepHighs==1 && EEPROM.readCount==25,\"USB Dose exactly one permission scan\");\n fresh(true);menu_number_1=9;in_action=true;Serial.inject(\"p1000 5000\");tick();\n {const int before=stepHighs;EEPROM.write(32+9,EEPROM.read(32+9)^1);tick();\n verify(stepHighs==before && !usb_start && !rng_running && pins[7]==LOW,\n        \"USB running CRC tamper denies next STEP\");}\n fresh(true);menu[6].value=1;delay_us=625;in_action=true;tick();\n {const int before=stepHighs;EEPROM.write(64,0);tick();\n verify(stepHighs==before && !in_action && !rng_running && pins[7]==LOW,\n        \"Local running inhibit revocation denies next STEP\");}\n fresh(true);menu[6].value=1;delay_us=625;in_action=true;tick();\n {const int before=stepHighs;EEPROM.write(32+9,EEPROM.read(32+9)^1);tick();\n verify(stepHighs==before && !in_action && !rng_running,\n        \"Local running profile CRC corruption denies next STEP\");}\n fresh(true);menu[6].value=1;delay_us=625;in_action=true;tick();\n {const int before=stepHighs;encoder->button=ClickEncoder::Clicked;tick();\n verify(stepHighs==before && !in_action && !rng_running && pins[7]==LOW,\n        \"STOP still immediate at next loop with optimized validation\");}\n\n verify(approvedTests>=35,\"minimum branch coverage count\");\n std::printf(\"HW_SETUP_01D_FULL_SOURCE_FCPU_%lu=%d/%d PASS; HW=NOT_RUN\\n\",\n             (unsigned long)F_CPU,approvedTests,approvedTests);\n}";
+function run(cmd,args,label,marker){
+ const x=cp.spawnSync(cmd,args,{encoding:'utf8',timeout:180000,maxBuffer:10*1024*1024});
+ const result=(x.stdout||'')+'\n'+(x.stderr||'');
+ if(x.stdout)process.stdout.write(x.stdout);if(x.stderr)process.stderr.write(x.stderr);
+ if(x.error||x.status!==0 || (marker&&!result.includes(marker)))throw Error(label+' '+(x.error?.message||'exit '+x.status)+' marker '+marker);
+ console.log(label+'=PASS');
+}
+let tmp;
+try{
+ run(process.execPath,[path.join(__dirname,'hw-setup-01d-accepted-timing-gate.cjs')],
+    'HW_SETUP_01D_SOURCE_HOT_PATH','HW_SETUP_01D_TIMING_GATE=SOURCE_CHECK_PASS');
+ const candidate=build();
+ const fixture=fs.readFileSync(path.join(__dirname,'p0-01-full-loop-host.cjs'),'utf8');
+ const m=fixture.match(/^const stub=(.*);$/m);if(!m)throw Error('HOST_STUB_NOT_FOUND');
+ let stub=JSON.parse(m[1]);
+ const old='void write(int a,byte b){if(a<0||a>=1024)std::abort();memory[a]=b;}\n} EEPROM;';
+ const newer='void write(int a,byte b){if(a<0||a>=1024)std::abort();memory[a]=b;}\nvoid update(int a,byte b){write(a,b);}\n}; using EEPROMClass=EepromMock; EepromMock EEPROM;';
+ if(stub.split(old).length!==2)throw Error('HOST_EEPROM_STUB_CHANGED');stub=stub.replace(old,newer);
+ // Instrument the REAL whole-sketch mock EEPROM, not a separate abstract model.
+ const oldMem='byte memory[1024];';
+ const oldRead='byte read(int a){if(a<0||a>=1024)std::abort();return memory[a];}';
+ if(stub.split(oldMem).length!==2||stub.split(oldRead).length!==2)
+   throw Error('HOST_EEPROM_READ_INSTRUMENTATION_CHANGED');
+ stub=stub.replace(oldMem,oldMem+'int readCount=0;');
+ stub=stub.replace(oldRead,'byte read(int a){readCount++;if(a<0||a>=1024)std::abort();return memory[a];}');
+
+ const lcdOld='size_t print(const char*){return 1;}size_t write(char){return 1;}size_t write(unsigned char){return 1;}';
+ const lcdNew='std::string lastPrint[2];int currentRow=0;size_t print(const char* s){lastPrint[currentRow]=s;return lastPrint[currentRow].size();}size_t write(char){return 1;}size_t write(unsigned char){return 1;}';
+ if(stub.split(lcdOld).length!==2)throw Error('HOST_LCD_STUB_CHANGED');stub=stub.replace(lcdOld,lcdNew);
+ const cursorOld='void begin(int,int){}void blink(){}void noBlink(){}void setCursor(int,int){}';
+ const cursorNew='void begin(int,int){}void blink(){}void noBlink(){}void setCursor(int,int y){currentRow=y;}';
+ if(stub.split(cursorOld).length!==2)throw Error('HOST_LCD_CURSOR_CHANGED');stub=stub.replace(cursorOld,cursorNew);
+ tmp=fs.mkdtempSync(path.join(os.tmpdir(),'perpompa-01c-'));
+ const dir=path.join(tmp,'Peristaltic_Pump_Software_v1.05');fs.mkdirSync(dir);
+ const name='Peristaltic_Pump_Software_v1.05.ino';fs.writeFileSync(path.join(dir,name),candidate);
+ for(const h of ['hw-setup-profile.h','hw-setup-runtime.h'])fs.copyFileSync(path.join(root,h),path.join(dir,h));
+ const prototypes=[...candidate.matchAll(/^(void|boolean|bool|int8_t|long|int)\s+([a-zA-Z_]\w*)\s*\(([^)]*)\)\s*\{/gm)].map(m=>m[1]+' '+m[2]+'('+m[3]+');').join('\n');
+ const sketch=candidate.replace(/^[ \t]*#include[ \t]*<[^\r\n]*/gm,'');
+ const cpp=path.join(tmp,'whole.cpp');fs.writeFileSync(cpp,stub+'\n'+prototypes+'\n'+sketch+'\n'+tests);
+ const cxx=process.env.CXX||'g++';
+ for(const hz of [16000000,8000000]){
+  const exe=path.join(tmp,'run-'+hz+(process.platform==='win32'?'.exe':''));
+  run(cxx,['-std=c++17','-O0','-Wall','-Wextra','-Wno-unused-parameter','-fsanitize=undefined,float-cast-overflow','-fno-sanitize-recover=all','-DF_CPU='+hz+'UL','-I',dir,cpp,'-o',exe],'HOST_COMPILE_'+hz,'');
+  const x=cp.spawnSync(exe,[],{encoding:'utf8',timeout:120000});
+  const match=(x.stdout||'').match(new RegExp('HW_SETUP_01D_FULL_SOURCE_FCPU_'+hz+'=(\\d+)\\/\\1 PASS'));
+  if(x.stdout)process.stdout.write(x.stdout);if(x.stderr)process.stderr.write(x.stderr);
+  if(x.error||x.status!==0||!match||Number(match[1])<35)throw Error('FULL_SOURCE_HOST_FAIL_'+hz+' '+(x.error?.message||x.stderr||'marker missing'));
+  console.log('FULL_SOURCE_HOST_'+hz+'=PASS');
+ }
+ const cli=process.env.ARDUINO_CLI||'arduino-cli';
+ for(const clock of ['16MHzatmega328','8MHzatmega328']){
+   const fqbn='arduino:avr:pro:cpu='+clock;
+   run(cli,['compile','--fqbn',fqbn,'--build-path',path.join(tmp,'build-'+clock),dir],'HW_SETUP_01D_AVR_'+clock,'');
+ }
+ console.log('HW_SETUP_01D_ACCEPTED_SOURCE_QA=PASS; STEP_READS=25_SOURCE_AND_HOST; P002_STOP_LATENCY=REVIEW; ACCEPTED_INO_BLOB_VERIFIED; HW_BENCH=NOT_RUN; RELEASE_BLOCKED');
+}catch(e){console.error('HW_SETUP_01D_ACCEPTED_SOURCE_QA=BLOCKED '+e.message);process.exitCode=2;}
+finally{if(tmp)fs.rmSync(tmp,{recursive:true,force:true});}

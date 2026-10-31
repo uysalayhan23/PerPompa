@@ -5,6 +5,7 @@
 #include <EEPROM.h> //write and read EEPROM (to save and load settings)
 #include <stdio.h>
 #include <string.h>
+#include "hw-setup-runtime.h"
 
 
 //LCD -----------------------------------------------------------------------------------
@@ -97,11 +98,13 @@ const unsigned int CALIBR_DELAY_US = (CALIBR_DURATION * MICROSEC_PER_SEC)/(CALIB
 
 //MENU ---------------------------------------------------------------------------------------
 #define MAX_NUM_OF_OPTIONS 4
-#define NUM_OF_MENU_ITEMS 11
+#define NUM_OF_MENU_ITEMS 12
 #define VALUE_MAX_DIGITS 4
 int menu_number_1=0;
 int menu_number_2=1;
 boolean val_change =0;
+bool hwUiActive=false;
+perpompa_hw::SafeSetup<EEPROMClass> hwSetup(EEPROM,F_CPU);
 double value_dbl;
 char value_str[16]; // dtostrf width is a minimum; displayed values can exceed four characters.
 char lcd_shown[2][LCD_COLUMNS+1];
@@ -130,7 +133,8 @@ menu_item menu[NUM_OF_MENU_ITEMS];
 //███ SETUP ████████████████████████████████████████████████████████████████████████████████████████████████████
 void setup(){
   
- pinMode(MOTOR_STEP_PIN,OUTPUT); 
+ pinMode(MOTOR_STEP_PIN,OUTPUT);
+ hwSetup.boot();
  pinMode(MOTOR_DIR_PIN,OUTPUT);
  digitalWrite(RNG_PIN, RNG_IDLE_LEVEL);
  pinMode(RNG_PIN, OUTPUT);
@@ -218,7 +222,13 @@ void setup(){
  menu[10].options[REMOTE_HOLD] = "Hold";
  menu[10].options[REMOTE_PULSE] = "Pulse";
 
-  for (int i=0; i <= menu_items_limit; i++){
+ menu[11].name_ = "HW Setup";
+ menu[11].type = ACTION;
+ menu[11].value = 0;
+ menu[11].lim = 0;
+ menu[11].suffix = "";
+
+  for (int i=0; i < 11; i++){
       int saved_value = eepromReadInt(i*2);
       if (menu[i].type == ACTION){
         menu[i].value = 0;
@@ -279,7 +289,27 @@ if (encoder_button_down){
   encoder_button_low_ms = millis();
 }
 ClickEncoder::Button b = encoder->getButton();
-  if (b != ClickEncoder::Open) {
+  if (menu_number_1 == 11 && b != ClickEncoder::Open) {
+    if (b == ClickEncoder::Clicked) {
+      if (!hwUiActive) {
+        hwUiActive=hwSetup.enter(!in_action && !rng_running,
+          !remote_started && remote_stable_state==HIGH, !usb_start);
+      } else {
+        hwSetup.nextPage();
+      }
+      val_change=true;
+    } else if (b == ClickEncoder::Held && hwUiActive && !encoder_hold_handled) {
+      if (hwSetup.page()==perpompa_hw::kConfirmPage) {
+        if (hwSetup.confirmAndSave(true, !in_action && !rng_running,
+          !remote_started && remote_stable_state==HIGH, !usb_start)) hwUiActive=false;
+      } else { hwSetup.cancel(); hwUiActive=false; }
+      encoder_hold_handled=true; val_change=true;
+    } else if (b == ClickEncoder::DoubleClicked && hwUiActive) {
+      hwSetup.cancel(); hwUiActive=false; val_change=true;
+    } else if (b == ClickEncoder::Released) {
+      encoder_hold_handled=false;
+    }
+  } else if (b != ClickEncoder::Open) {
     if (b == ClickEncoder::Clicked || b == ClickEncoder::DoubleClicked || b == ClickEncoder::Released){
       encoder_button_pending = false;
       encoder_button_event_ms = millis();
@@ -328,6 +358,14 @@ ClickEncoder::Button b = encoder->getButton();
         }
   }
 encoder_step = read_encoder_step(); // always drains movement, including while the pump is running
+if(hwUiActive && encoder_step != 0){
+  if(hwSetup.page() == perpompa_hw::kBoardPage){
+    hwSetup.chooseBoard(encoder_step > 0 ? perpompa_hw::kProMini5V16MHz : perpompa_hw::kProMini3V3_8MHz);
+  } else if(hwSetup.page() == perpompa_hw::kDriverPage){
+    hwSetup.chooseDriver(encoder_step > 0 ? perpompa_hw::kDRV8825 : perpompa_hw::kA4988);
+  }
+  encoder_step=0; val_change=true;
+}
 
 
 /// SETUP ////////////////////////////////////////////////////////////////////////////////
@@ -351,6 +389,7 @@ if (menu_entered){
 if (in_action){
   switch (menu_number_1){
   case 0: //Start
+  if (menu[6].value < 0 || menu[6].value > 2) { hwForceIdle(); exit_action_menu(); break; }
   if (menu[6].value == 0){ //Dose
     if (steps <= 0 || delay_us < 4 || delay_us > 16000 || dose(steps, delay_us, step_counter)){
       exit_action_menu();
@@ -366,7 +405,7 @@ if (in_action){
   break;
 
   case 8:
-   for (int i=0; i <= menu_items_limit; i++){
+   for (int i=0; i < 11; i++){
       eepromWriteInt(i*2,menu[i].value);
    }
    delay(700);
@@ -400,7 +439,7 @@ if (in_action){
     } else if (inChar == 'w'){
       cal=Serial.parseInt();
       menu[7].value =cal;
-      for (int i=0; i <= menu_items_limit; i++){
+      for (int i=0; i < 11; i++){
       eepromWriteInt(i*2,menu[i].value);
       }
       usb_start=false;
@@ -546,9 +585,27 @@ void set_rng_running(bool running){
 
 //_____________________________________________________________________________________________
 
+void hwForceIdle(){digitalWrite(MOTOR_STEP_PIN,LOW);set_rng_running(false);usb_start=false;}
+
+bool hwMotorAllowed(){
+  perpompa_hw::StartPath path=perpompa_hw::kStartPathCount;
+  if(menu_number_1==9){
+    path=inChar=='d' ? perpompa_hw::kUsbDose : inChar=='p' ? perpompa_hw::kUsbPump :
+      inChar=='c' ? perpompa_hw::kUsbCal : perpompa_hw::kStartPathCount;
+  } else if(menu_number_1==0){
+    if(menu[6].value<0 || menu[6].value>2) return false;
+    path=remote_started ? static_cast<perpompa_hw::StartPath>(perpompa_hw::kRemoteDose+menu[6].value) :
+      static_cast<perpompa_hw::StartPath>(perpompa_hw::kLocalDose+menu[6].value);
+  }
+  return hwSetup.permit(path,false);
+}
+
 void remote_start(){
   // Keep menu edits and the Save/USB actions under local control.
-  if (in_menu || in_action) return;
+  if (in_menu || in_action || hwUiActive) return;
+  if (menu[6].value < 0 || menu[6].value > 2 ||
+      !hwSetup.permit(static_cast<perpompa_hw::StartPath>(perpompa_hw::kRemoteDose+menu[6].value),false))
+      { hwForceIdle(); return; }
   menu_number_1 = 0;
   menu_number_2 = 1;
   update_lcd();
@@ -598,6 +655,7 @@ void handle_remote_input(){
 //_____________________________________________________________________________________________
 
 boolean dose(long _steps, int _delay_us, long & inc) {
+  if (!hwMotorAllowed()) {hwForceIdle();inc=0;if(menu_number_1==0)exit_action_menu();return true;}
   if (_steps <= 0 || _delay_us < 4 || _delay_us > 16000) {
     digitalWrite(MOTOR_STEP_PIN, LOW);
     set_rng_running(false);
@@ -634,6 +692,7 @@ void dose_slow(long _steps, int _delay_us, long & inc) {
 //_____________________________________________________________________________________________
 
 void pump(int _delay_us) {
+  if (!hwMotorAllowed()) {hwForceIdle();if(menu_number_1==0)exit_action_menu();return;}
   if (_delay_us < 4 || _delay_us > 16000) {
     digitalWrite(MOTOR_STEP_PIN, LOW);
     set_rng_running(false);
@@ -709,6 +768,11 @@ void format_menu_line(int index, char *line){
 }
 
 void update_lcd(){
+  if (menu_number_1 == 11){
+    char top[17],bottom[17]; hwSetup.lcdRows(top,bottom);
+    lcd.setCursor(0,0);lcd.print(top);lcd.setCursor(0,1);lcd.print(bottom);
+    lcd_cache_valid=false; return;
+  }
   char desired[2][LCD_COLUMNS+1];
   format_menu_line(menu_number_1, desired[0]);
   format_menu_line(menu_number_2, desired[1]);

@@ -3,7 +3,7 @@
 **Aktif manifest:** [REVISION_MANIFEST.md](REVISION_MANIFEST.md) v1.1 — kullanıcı onaylı tespit → onar → test → teslim → sıradaki iş döngüsü  
 **Başlangıç main HEAD:** `8624b2b78b0bcf4f83dd3388b5533b46e7b7d667` (tarihsel; her zaman canlı HEAD oku)  
 **Arşiv v1.04 kaynak blob kilidi:** `0d965c08947ba0b3170d22fbff806fc2e6f1e83a`  
-**Aktif görev:** `HW-SETUP-01D/P0-02 — 50→25 EEPROM.read/STEP kaynak optimizasyonu, yeni 01D full-loop ve çift AVR NOT_RUN, .ino HOLD`  
+**Aktif görev:** `P0-02 — HW-SETUP-01D yazılım kaynak teslimi PASS, fiziksel STEP frekansı/jitter ve STOP gecikmesi REVIEW; release BLOCKED`  
 **Aşama:** P0-01 aktif yazılım kaynak 32/32 tam loop + 42/42 kaynak + 2/2 AVR PASS; fiziksel ve release BLOCKED. HW-SETUP-01 SPEC/TEST_FIRST.  
 **Kod kabulü:** P0-01 SOURCE/HOST_CPP/AVR_COMPILE=PASS, yeni aktif blob `6617cc38bde9bddf1c32cd0506915c0054556127`; fiziksel HW_BENCH/HW_PUMP/USER_ACCEPTANCE NOT_RUN; RELEASE_BLOCKED.
 
@@ -244,3 +244,27 @@ Tek komut (repo ZIP kökünde, Node ve native g++ ve Arduino CLI kurulu ise):
 **P0-02 sınırı:** 50→25 EEPROM okuması kaynak düzeyinde doğrulandı; **P0-02 gerçek STEP zamanlaması, motor stop latansı, jitter, brownout/arm atomicity ve HW_BENCH/HW_PUMP = REVIEW/NOT_RUN; endüstriyel RELEASE_BLOCKED.** Motorun güvenli olduğunu yalnız simülasyondan iddia etme.
 
 **Bir sonraki geçit:** Yeni `tests/hw-setup-01d-qa.cjs` testinin **full setup/loop 16/8 MHz host pozitif-negatif + çift Arduino AVR** gerçek çıktısını al. Gerekirse hedefli kaynak kusuru düzelt; 01D motor kaynak değişikliğini ancak yeni bütün kapılar PASS ve timing/STOP riski yeterince değerlendirildiyse `[skip ci]` main'e gönder. Fiziksel STOP/ürün kabulünü yine ayrı REVIEW/BLOCKED tut.
+
+
+## 2026-10-31 — HW-SETUP-01D yazılım kabulü ve doğrulanmış kaynak teslimi
+
+**Task ID:** HW-SETUP-01D / P0-02. **Base `main`:** `cc79cfef14520a002fdb12fa2667d9ea691eae82`. **Eski P0-01 v1.05 .ino blob:** `6617cc38bde9bddf1c32cd0506915c0054556127`. **Yeni aktif v1.05 .ino Git blob:** `04185aaa799b0af0bfa663b8acc8f5013a515066`. **Değişmez v1.04 blob:** `0d965c08947ba0b3170d22fbff806fc2e6f1e83a`. GitHub `main` teslim commit SHA'sı uzak HEAD teyidinde doğrulanmalıdır. `AGENTS.md`, `REVISION_MANIFEST.md`, profil ve runtime header dosyaları değiştirilmedi.
+
+**Özgün kaynak kusuru / negatif kanıt:** Önceki geçici HW-SETUP-01C adayı hem Local/USB action tarafında hem `dose()/pump()` STEP kaynağında `hwMotorAllowed()` çağırarak bir yetkili STEP için **50 EEPROM.read** yapıyordu. Bu, gerçek AVR gecikmesi ölçülmüş olduğu anlamına gelmez; P0-02 zamanlama riskiydi. `tests/hw-setup-01d-step-timing-gate.cjs` kaynak-audit denetimi ile hem eksik STEP izni hem yinelenmiş izin negatif mutantları **exit 2 BLOCKED** verdi.
+
+**En küçük kaynak düzeltmesi:** `tests/hw-setup-01c-candidate.cjs` ile eşleşen 14 kaynak yaması, üzerine `tests/hw-setup-01d-candidate.cjs` içindeki 4 eşleşme-kilitli düzeltme; gerçek motor pulsunda tek son `SafeSetup::permit()` kontrolü korunur, yinelenen Local/USB tam profil okuması çıkarılır. Local izin reddinde STOP/STEP LOW/RNG idle ve menüden çıkış; Remote başlangıç izin kontrolü; EEPROM 32/48 iki slot CRC, 64 inhibit byte, A4988 ilk öneri/DRV8825 alternatif, 8/16 MHz F_CPU uyumu ve 16×2 LCD kurulum akışı. Geçici kabul adayının `Peristaltic_Pump_Software_v1.05.ino` **27.237 karakterlik** çıktısı byte-özdeş şekilde yeni aktif blob `04185aaa799b0af0bfa663b8acc8f5013a515066` olarak aktarılır.
+
+**Gerçek Windows pozitif-negatif kabul kanıtı (kullanıcı PowerShell, 2026-10-31):**
+- `HW_SETUP_01D_SOURCE_HOT_PATH=PASS`: Local/USB Dose/Pump/Cal için kaynak düzeyinde **25 EEPROM.read / yetkili STEP**. Bu süre/jitter ölçümü değildir.
+- `HW_SETUP_01D_FULL_SOURCE_FCPU_16000000=68/68 PASS`: gerçek `setup()/loop()` gövdeli C++ mock/UBSan; negatif testler izin baytı iptali, CRC bozulması, Local/USB/Remote başlatma, STOP, 24.000 STEP Cal, encoder/LCD/EEPROM. Bu fiziksel AVR'de yürütüm değildir.
+- `HW_SETUP_01D_FULL_SOURCE_FCPU_8000000=68/68 PASS` (aynı kaynak, ikinci F_CPU).
+- `HW_SETUP_01D_AVR_16MHzatmega328=PASS`: Flash **19.268/30.720 (%62)**, SRAM **990/2048 (%48)**.
+- `HW_SETUP_01D_AVR_8MHzatmega328=PASS`: Flash **19.264/30.720 (%62)**, SRAM **990/2048 (%48)**.
+- `HW_SETUP_01D_SOFTWARE_QA=PASS; ACTIVE_INO_UNCHANGED; RELEASE_BLOCKED`, test aracı çıkış kodu **0**. Önceki P0-01 32/32 + 42/42 + 2/2, profil 125/125 ×2 ve runtime 486/486 ×2 tarihsel PASS korunur, tekrar çalıştırılmadı.
+- Clang dört warning verdi: `menu[].suffix` sabit-string işaretçi karşılaştırmaları ve `switch` içindeki `Open/Pressed` enum kapsaması. Bunlar bu kabul edilmiş adayda değiştirilmedi; ayrı **REVIEW**.
+
+**Karar / ayrılmış kapılar:** `HW-SETUP-01D SOURCE_CHECK/HOST_CPP/AVR_COMPILE=PASS` ve aktif firmware'e yazılım kaynağı teslim edilebilir. **P0-02 gerçek stop latency, ölçülmüş STEP high/low frekansı, jitter, EEPROM okuma maliyeti, brownout güvenliği, fiziksel A4988/DRV8825/mikro-adım onayı, HW_BENCH/HW_PUMP/USER_ACCEPTANCE = REVIEW/NOT_RUN.** 25 EEPROM.read/STEP hala donanım hızını etkileyebilir; 50→25 statik iyileşme zamanlama performans garantisi değildir. Endüstriyel `RELEASE_BLOCKED`, G01–G10 `NOT_RUN` sürer. **Gerçek güvenlik donanımı doğrulanmadan cihaza yükleme/ürün kullanımı için onay verme.**
+
+**Post-merge ayrı test:** `tests/hw-setup-01d-accepted-qa.cjs` kabul edilmiş aktif Git blob `04185aaa799b0af0bfa663b8acc8f5013a515066` ve v1.04 arşiv blob SHA'yı doğrulayıp, aktif `.ino` üzerinden aynı kaynak tam döngü mock + 8/16MHz Arduino CLI derleme kapılarını tekrar çalıştırır. `tests/hw-setup-01d-accepted-timing-gate.cjs` artık geçici aday üretimine bağlı olmadan gerçek aktif firmware kaynağında 25 okuma/STEP kaynak denetimi yapar. İki yeni test aracının Node sözdizimi **PASS**; post-merge gerçek Windows derleme **NOT_RUN**. Önceki `01D` aday QA aracı eski blob SHA'ya kilitli olduğundan post-merge yürütüm için kullanılmamalı.
+
+**Sonraki aktif risk-öncelikli görev:** P0-02, STOP gecikmesi ve motor STEP zamanlamasını güvenli şekilde ölçmeye yönelik gerçek kaynak/host timing budget analizi, 8/16 MHz öngörülen gecikme sınırı ve gerçek donanım bench kabul planı; durum REVIEW. Sonrasında string pointer karşılaştırması warningleri için ayrı kaynak negatif test ve minimal onarım. GitHub Actions/Work/Codex/force-push yok; tüm policy/hardware/release kilitleri korunur.
