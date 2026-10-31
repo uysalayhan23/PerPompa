@@ -3,7 +3,7 @@
 **Aktif manifest:** [REVISION_MANIFEST.md](REVISION_MANIFEST.md) v1.1 — kullanıcı onaylı tespit → onar → test → teslim → sıradaki iş döngüsü  
 **Başlangıç main HEAD:** `8624b2b78b0bcf4f83dd3388b5533b46e7b7d667` (tarihsel; her zaman canlı HEAD oku)  
 **Arşiv v1.04 kaynak blob kilidi:** `0d965c08947ba0b3170d22fbff806fc2e6f1e83a`  
-**Aktif görev:** `P0-01 — sınır değer ve motor zamanlama referans testleri`  
+**Aktif görev:** `P0-01 — gerçek Arduino derleme + hata anında motor çıkış kapısı kabulü`  
 **Aşama:** TEST_FIRST → aday geçici host denemesi; firmware düzeltmesi AVR derlemesi/test kilidi nedeniyle hâlâ `BLOCKED`. [P0_01_CANDIDATE.md](P0_01_CANDIDATE.md) kaydı oluştu.  
 **Kod kabulü:** PENDING; HOST_CPP 4 normal PASS + 2 geçersiz dönüşüm reproduce; AVR_COMPILE NOT_RUN; HW_BENCH NOT_RUN; HW_PUMP NOT_RUN; USER_ACCEPTANCE NOT_RUN.
 
@@ -19,6 +19,14 @@
 Güncel kaynak `main` başlangıç HEAD `e6875170ae886e750bdaf70c84428e9484b5c3e5`. Geçici host C++ testinde orijinal fonksiyonlar için **4 pozitif hesap PASS**, **sıfır kalibrasyon/hız 2 sanitizer FAIL tekrar üretildi**; ayrıca negatif hız ve çok düşük hız uygunsuz hesapları görüldü. İzole **aday** için **4 pozitif, 16 negatif, 3098 geçerli parametre paritesi PASS (HOST_CPP geçici aday, AVR değil)**. Gerçek .ino hâlâ değişmedi. Hesapta 0 döndürmenin `pump/dose` içinde STEP'i durdurmadığı açık tasarım kapısı. Bu nedenle **P0-01 firmware çözümü COMPLETE DEĞİL**.
 
 **P0-01 ek native test (2026-10-31):** [tests/p0-01-step-baseline.cpp](tests/p0-01-step-baseline.cpp) için host C++17 ASan/UBSan: Dose normal PASS, Pump normal PASS, Dose sıfır hacim no pulse PASS; zero-delay Pump ve Dose iki **beklenen kusur yeniden üretildi** (STEP+RNG). Tam `.ino`/AVR fiziksel PASS yok.\n\n**Sıradaki güvenli iş:** AVR derleme altyapısı + özgün kodun full-loop simülasyonunda `STEP=0`, `RNG=idle`, doğru stop durumu için test hazırlığı; ancak yeterli native/AVR kanıtı sonrası bir minimal yama ve ikinci bağımsız QA. Yeni oturum önce kaynak ve HEAD'i yeniden doğrulamalı.
+
+## 2026-10-31 — Yeni test ve somut bulgular
+
+- **HOST_CPP kaynak karşı-örnek yeniden doğrulandı:** 4/4 normal hesap, sıfır cal ve sıfır hız UBSan hatası; negatif hızın negatif gecikme üretmesi, küçük hızın 62500 µs istemesi; STEP/RNG uygunsuz sıfır delay iki durum yeniden üretildi. Yerel g++ 14.2.0; bu tam `.ino` test sonucu değildir.
+- **AVR nesne üretimi**: Clang 17 AVR backend ile kaynak hesap fonksiyonları ATmega328P hedefinde 8 ve 16 MHz `ELF e_machine=83` nesne oluşturdu; her iki koşuda 2 *uninitialized conv* derleyici uyarısı. **AVR_OBJECT_PASS**, fakat **Arduino builder/AVR-libc/kütüphane bağlama NOT_RUN**. Tekrar edilebilir araç: [tests/avr-object-probe.cjs](tests/avr-object-probe.cjs).
+- **Yalnız aday output host testi**: [tests/p0-01-output-candidate.cpp](tests/p0-01-output-candidate.cpp) ile normal Dose/Pump ve sıfır/negatif delay, yanlış RNG/STEP engelleme koşulları **18/18 HOST_CPP PASS** (mock GPIO). Aday üretim firmware'i değildir.
+- Açık risk: Pump invalid geri dönüşü `in_action` / USB kalıcı çalışma durumunu otomatik temizlemez; `loop()` ve USB dahil tam entegrasyon kanıtı olmadan `.ino` commit yok.
+- **Firmware/source SHA değişmedi**; arşiv kilitli. `AVR_ARDUINO_BUILD`, `FULL_LOOP_CPP`, `HW_BENCH`, `HW_PUMP` = NOT_RUN. `RELEASE_BLOCKED`.
 
 ## P0-01 kapsamı
 

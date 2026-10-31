@@ -24,3 +24,8 @@ Geçerli parametreleri koruyan hesap adayında: hacim/hız <=0, geçersiz mode/d
 ## Tamamlayıcı gerçek kaynak STEP/RNG host testleri (2026-10-31)
 
 `tests/p0-01-step-baseline.cpp`: özgün `dose` ve `pump` gövdeleri yalnız GPIO/delay mocklarıyla g++ C++17, AddressSanitizer + UBSan altında sınandı. 2 normal motor fonksiyonu davranışı ve 0 hedefte 0 pulse PASS; **`pump(0)` ve `dose(1,0,...)` için STEP HIGH+LOW darbesi ve RNG HIGH yeniden üretildi**. Test gerçek motor sürme uygulaması değildir. Nihai adayın `STEP=0` başarısızlık kapısı buradan gerektirir.
+
+## Yeni araçlar
+
+- [tests/avr-object-probe.cjs](tests/avr-object-probe.cjs): AVR hedefli yalnız hesap fonksiyonu object probe; iki ayrı frekansta 2 uninitialized `conv` uyarısı. Bu tam Arduino firmware derlemesi değildir.
+- [tests/p0-01-output-candidate.cpp](tests/p0-01-output-candidate.cpp): üretim firmware'i olmayan, güvenli STEP/RNG davranışına yönelik 18 host C++ mock test; geçerli durum korunuyor, invalid girişler adım üretmiyor. `loop` ve USB çalışma durumlarının temizlenmesi hâlâ REVIEW.

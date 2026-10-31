@@ -32,3 +32,8 @@ G01–G10 ürün release kapıları [INDUSTRIAL_RELEASE_GATE.md](INDUSTRIAL_RELE
 - `AVR_COMPILE`, `FULL_FIRMWARE_NATIVE`, `HW_BENCH`, `HW_PUMP`: **NOT_RUN**. `P0-01` firmware değişikliği **BLOCKED**, üretim sürümü **RELEASE_BLOCKED**.
 
 - `HOST_CPP` STEP/RNG mock: `dose(2,625)`, `pump(625)`, `dose(0,0)` pozitif PASS; `pump(0)`, `dose(1,0)` **istenmeyen STEP darbesi ve RNG aktif** yeniden üretildi; [tests/p0-01-step-baseline.cpp](tests/p0-01-step-baseline.cpp). Tam Arduino, gerçek zaman/donanım = NOT_RUN.
+
+## 2026-10-31 — AVR nesne denemesi / güvenli çıkış adayı
+
+`tests/avr-object-probe.cjs` gerçek .ino hesap fonksiyonlarını çıkarıp `clang++ --target=avr -mmcu=atmega328p` ile 8 MHz + 16 MHz nesneler üretmek için eklendi; yerel özgün hesap gövdesi denemesinde **2/2 AVR_OBJECT_PASS**, **2 warning per target** (`conv` geçersiz mode için başlatılmamış). **Tam Arduino/avr-gcc derlemesi değil.**
+`tests/p0-01-output-candidate.cpp`: **18/18 HOST_CPP adaya ait çıktı regresyonu PASS**, no-STEP/no-RNG invalid girişlerde; ancak tam `loop()` test ve gerçek kart NOT_RUN.
