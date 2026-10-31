@@ -7,6 +7,10 @@
 
 Her yeni oturum ilk işlem olarak **canlı** `main` HEAD'i, bu `REVISION_MANIFEST.md`, `NEXT_TASK.md`, `TEST_MATRIX.md`, kök `AGENTS.md` ve v1.05 kaynak dosyasını okumalıdır. Daha önceki sohbetin SHA'sını güncel sayma. Bu kontrol yapılmadan kod düzeltmesi, commit veya "PASS/COMPLETE" yok. Araçlar dosyaları otomatik okumuyorsa elle okut; yalnızca belleğe güvenme. Yeni sohbet açılması otomatik veya arka planda çalışma başlatmaz.
 
+## Politika dosyalarının sabitlenmesi
+
+**REVISION_MANIFEST.md ve kök AGENTS.md politika kilidindedir.** Kullanıcının bu iki dosyada açıkça onayladığı bir değişiklik olmadan kurallar gevşetilemez, kaldırılamaz, taşınamaz veya yeniden yazılamaz. Normal geliştirme sırasında sadece kanıta göre `NEXT_TASK.md` ve `TEST_MATRIX.md` güncellenir; bu güncellemeler politika istisnası oluşturamaz. GitHub `main` şu anda sunucu tarafı korumalı dal değildir; bu politika sürece ve kontrol kapısına dayanır, GitHub yöneticilerinin dosyaları teknik olarak değiştirmesini engelleyen bir yetki kısıtlaması değildir.
+
 ## 1. Değişmez referans ve kapsam kilitleri
 
 - **Korunmuş v1.04:** `firmware/archive/Peristaltic_Pump_Software_v1.04/Peristaltic_Pump_Software_v1.04.ino`; başlangıç Git blob SHA `0d965c08947ba0b3170d22fbff806fc2e6f1e83a`. Arşiv kaynak ve README'sini yeniden yazma, silme, yerini değiştirme.

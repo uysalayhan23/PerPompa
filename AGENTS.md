@@ -7,6 +7,8 @@ Bu deponun **tek aktif firmware geliştirme sürümü v1.05**. Her görevde önc
 3. `firmware/Peristaltic_Pump_Software_v1.05/TEST_MATRIX.md` (**regresyon kanıtları**)
 4. Aktif `Peristaltic_Pump_Software_v1.05.ino`, canlı `main` HEAD, arşivlenen v1.04 SHA.
 
+**Politika kilidi:** `REVISION_MANIFEST.md` ve kök `AGENTS.md` yalnız kullanıcının açık izniyle değiştirilebilir. Test ilerlemesi yalnız `NEXT_TASK.md` / `TEST_MATRIX.md` üzerinde kayıt altına alınır. Kuralların gevşetilmesi için bu dosyalara sessiz değişiklik yapılamaz.
+
 **KESİN KİLİTLER:** `firmware/archive/` değiştirme. No force-push, no GitHub Actions, no Work/Codex (aksi açıkça yetkilendirilmedikçe). `[skip ci]`, beklenen HEAD kontrolü, uzak commit/blob SHA teyidi. Kanıtsız PASS/COMPLETE yazma; host/model testi AVR/hardware PASS değildir. Kaynak değişikliği yalnız kanıtlı P0-01 ve sonraki tek aktif manifest görevi için, en küçük yama ve pozitif-negatif test geçildikten sonra.
 
 Yeni sohbet, görev veya ajan başlaması bu kuralları kaldırmaz. Manifest/görev dosyaları okunamıyorsa **kod yazmayı durdur, READ_BLOCKED bildir.** Kullanıcının açık talebi olmadan kapsam genişletme.
