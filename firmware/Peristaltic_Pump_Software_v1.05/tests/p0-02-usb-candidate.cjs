@@ -8,8 +8,6 @@ function gitSha(bytes){return crypto.createHash('sha1').update('blob '+bytes.len
   .update(Buffer.from([0])).update(bytes).digest('hex');}
 const usbCase=`  case 9: {
     // Bounded, nonblocking input. STOP events are processed before any STEP.
-    perpompa_usb::Event idleEvent=usbParser.tick(millis());
-    if (idleEvent.kind!=perpompa_usb::kNone) usbApplyEvent(idleEvent);
     uint8_t budget=32;
     while (budget && Serial.available()) {
       --budget;
@@ -21,6 +19,12 @@ const usbCase=`  case 9: {
     if (Serial.available()) {
       // Fail closed on excess queued data; discard across future loops.
       usbParser.reset(); usbDropUntilEmpty=true; hwForceIdle(); inChar=0;
+    }
+    // Process UART input before quiet completion. An already-queued STOP or
+    // late final digit must never be overtaken by a stale timeout event.
+    if (!usbDropUntilEmpty && !Serial.available()) {
+      perpompa_usb::Event idleEvent=usbParser.tick(millis());
+      if (idleEvent.kind!=perpompa_usb::kNone) usbApplyEvent(idleEvent);
     }
 
 `;

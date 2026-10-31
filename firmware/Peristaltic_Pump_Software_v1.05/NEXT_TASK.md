@@ -3,7 +3,7 @@
 **Aktif manifest:** [REVISION_MANIFEST.md](REVISION_MANIFEST.md) v1.1 — kullanıcı onaylı tespit → onar → test → teslim → sıradaki iş döngüsü  
 **Başlangıç main HEAD:** `8624b2b78b0bcf4f83dd3388b5533b46e7b7d667` (tarihsel; her zaman canlı HEAD oku)  
 **Arşiv v1.04 kaynak blob kilidi:** `0d965c08947ba0b3170d22fbff806fc2e6f1e83a`  
-**Aktif görev:** `P0-02 USB QA başlık-prototip C++ sırası düzeltildi; hedefli g++ 2/2 PASS, tam loop ve AVR NOT_RUN, firmware HOLD`  
+**Aktif görev:** `P0-02 USB geçici adayda UART kuyruğu önce, 40ms tick sonra; 28/28 kaynak + 4/4 mutant + 13/13×2 native PASS, full-loop/AVR NOT_RUN; firmware HOLD`  
 **Aşama:** P0-01 aktif yazılım kaynak 32/32 tam loop + 42/42 kaynak + 2/2 AVR PASS; fiziksel ve release BLOCKED. HW-SETUP-01 SPEC/TEST_FIRST.  
 **Kod kabulü:** P0-01 SOURCE/HOST_CPP/AVR_COMPILE=PASS, yeni aktif blob `6617cc38bde9bddf1c32cd0506915c0054556127`; fiziksel HW_BENCH/HW_PUMP/USER_ACCEPTANCE NOT_RUN; RELEASE_BLOCKED.
 
@@ -342,3 +342,19 @@ One-shot QA now requires this new native gate before full C++ and true 8/16 MHz 
 Open gates: new full setup()/loop() real C++ NOT_RUN; real Arduino Pro Mini 16/8 MHz AVR candidate compiles NOT_RUN. Physical STOP latency, jitter, 40 ms framing REVIEW; HW_BENCH, HW_PUMP, user acceptance NOT_RUN; industrial RELEASE_BLOCKED. Production firmware HOLD.
 
 Next: From fresh GitHub main ZIP on Windows with clang++ and Arduino CLI, run node firmware/Peristaltic_Pump_Software_v1.05/tests/p0-02-usb-one-shot-qa.cjs. Fix any further proven source/test bug in temporary candidate only; no active firmware commit until all new host and AVR gates PASS.
+
+## 2026-10-31 — P0-02: UART kuyruğu/sessizlik sıralaması güvenlik düzeltmesi (yalnız geçici aday)
+
+Canlı temel main 0533c0940e55766233330c426f99b94977ffb190. Kabul edilmiş aktif firmware blob 04185aaa799b0af0bfa663b8acc8f5013a515066, v1.04 arşivi, AGENTS.md, REVISION_MANIFEST.md, HW profile/runtime ve parser header kaynakları DEĞİŞMEDİ. Eski parser 36/36×2, dispatch 19/19×2, 26/26+3/3 mutant, prototip sırası 2/2 geçmiş PASS kanıtları korunur, tekrar çalıştırılmadı.
+
+**Kaynakta kanıtlı yeni kusur:** Geçici p0-02-usb-candidate.cjs, USB case 9 içinde `usbParser.tick(millis())` çağrısını mevcut UART kuyruğunu okumadan ÖNCE yapıyordu. Örneğin `p1000 500` alınıp 41ms sonra son `0` UART kuyruğunda olduğunda, eski sıra 500 değerli erken `kPump` üretiyor; ardından gelen rakamı ayrı geçersiz komut kabul ediyor. Aynı sıralama kuyruğa gelmiş `x` STOP olayından önce geçici erken `kPump` olayı üretebiliyor. Bunlar kaynak/model kaynaklı risk; fiziksel STEP üretildiği iddia edilmedi.
+
+**Minimal aday onarımı:** 32-bayt/loop sınırlı UART okuma ve backlog fail-closed işleminden SONRA, yalnız `!usbDropUntilEmpty && !Serial.available()` durumunda `usbParser.tick(millis())` çağrılır. Böylece kuyruğa gelmiş rakam/STOP baytı sessizlik kararından önce işlenir. `Serial.parseInt()` geri gelmedi; `pump()/dose()/Remote` gövdeleri, STEP izinleri, EEPROM, 16x2 LCD ve aktif .ino korunur.
+
+**Gerçek hedefli native kanıt:** `tests/p0-02-usb-queue-order-native.cpp`, aynı Git blob SHA b1d1bbb8f3dc89f736c01a72cbb1934016622328 ile yerel `g++ -std=c++11 -O0 -Wall -Wextra -Werror -pedantic -fsanitize=undefined -fno-sanitize-recover=all` altında F_CPU=16000000UL **13/13 PASS**, F_CPU=8000000UL **13/13 PASS**. Eski tick-first mantığı erken kPump olayını yeniden üretiyor; feed-first son rakamı işler, kuyruktaki x'i STOP yapar, tam 40ms sessizlik ve millis wrap kontrolleri geçer. Bu parser + olay sıralaması model testidir; tam özgün setup/loop veya AVR zamanlaması değildir.
+
+**Ek kaynak denetimi:** Güncel geçici aday üretimi 28.885 karakter. `tests/p0-02-usb-candidate-source-gate.cjs` **28/28 PASS**; kaynakta bozulmuş STOP, STEP, UART read veya sessizlik kuyruk kapısı için **4/4 mutant BLOCKED**. `tests/p0-02-usb-queue-order-gate.cjs` gerçek header, cpp ve aktif firmware Git blob SHA'larını doğrular; kaynak sıralamasını ve F_CPU 8/16MHz native 13/13 marker'larını zorunlu kılar. Tek komut `tests/p0-02-usb-one-shot-qa.cjs` mevcut prototip 2/2 kontrolünün yanına yeni sıra 2/2 kontrolünü ekler.
+
+**Açık kabul:** Bu yeni geçici adayın tam `setup()/loop()` C++ pozitif-negatif koşusu **NOT_RUN**; gerçek Arduino Pro Mini 8 ve 16MHz AVR derlemesi **NOT_RUN** (bu oturumda arduino-cli/avr-g++ yok). Dolayısıyla yeni USB adayının aktif firmware teslimi **HOLD**; fiziksel P0-02 STOP latency/jitter, 40ms protokol ve brownout **REVIEW**, HW_BENCH/HW_PUMP/USER_ACCEPTANCE **NOT_RUN**, endüstriyel **RELEASE_BLOCKED**.
+
+**Sıradaki kanıt geçidi:** Windows'ta mevcut clang++ ve Arduino CLI ile güncel GitHub main ZIP'inden `node firmware/Peristaltic_Pump_Software_v1.05/tests/p0-02-usb-one-shot-qa.cjs` koş; sonuçlar FAIL ise gerçek host/AVR kusurlarını test-öncelikli düzelt. Bütün yeni kapılar PASS olmadan aktif .ino değişmez. Work/Codex/Actions/force-push yok, [skip ci] main dışında teslim yok.

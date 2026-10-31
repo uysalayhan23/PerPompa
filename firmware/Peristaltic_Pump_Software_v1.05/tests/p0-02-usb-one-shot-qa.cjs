@@ -29,6 +29,14 @@ try{
  if(prototypeGate.error||prototypeGate.status!==0||
     !(prototypeGate.stdout||'').includes('P002_PROTO_HEADER_NATIVE=2/2 PASS'))
    throw Error('P002_PROTO_HEADER_ORDER_NOT_PASSED '+(prototypeGate.error?.message||'exit '+prototypeGate.status));
+ const queueGate=cp.spawnSync(process.execPath,
+   [path.join(__dirname,'p0-02-usb-queue-order-gate.cjs')],
+   {encoding:'utf8',timeout:60000,maxBuffer:1048576,env:process.env});
+ if(queueGate.stdout)process.stdout.write(queueGate.stdout);
+ if(queueGate.stderr)process.stderr.write(queueGate.stderr);
+ if(queueGate.error||queueGate.status!==0||
+    !(queueGate.stdout||'').includes('P002_QUEUE_ORDER_NATIVE=2/2 PASS'))
+   throw Error('P002_USB_QUEUED_DATA_ORDER_NOT_PASSED '+(queueGate.error?.message||'exit '+queueGate.status));
  const result=cp.spawnSync(process.execPath,
    [path.join(__dirname,'p0-02-usb-full-loop-avr-qa.cjs')],
    {encoding:'utf8',timeout:240000,maxBuffer:10*1024*1024,env:process.env});

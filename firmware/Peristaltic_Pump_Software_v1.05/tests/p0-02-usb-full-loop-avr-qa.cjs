@@ -16,7 +16,7 @@ function run(cmd,args,label,marker){
 let tmp;
 try{
  run(process.execPath,[path.join(__dirname,'p0-02-usb-candidate-source-gate.cjs')],
-    'P002_USB_SOURCE_GATE','P002_USB_CANDIDATE_SOURCE_CHECK=26/26 PASS');
+    'P002_USB_SOURCE_GATE','P002_USB_CANDIDATE_SOURCE_CHECK=28/28 PASS');
  const candidate=build();
  const fixture=fs.readFileSync(path.join(__dirname,'p0-01-full-loop-host.cjs'),'utf8');
  const m=fixture.match(/^const stub=(.*);$/m);if(!m)throw Error('HOST_STUB_NOT_FOUND');

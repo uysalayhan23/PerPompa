@@ -35,6 +35,15 @@ function audit(src,old){
            'hwSetup.permit(path,false)',
            'hwSetup.permit(static_cast<perpompa_hw::StartPath>');
  for(const marker of need)if(!src.includes(marker))throw Error('SAFETY_MARKER_MISSING '+marker);
+ const usbStart=src.indexOf('  case 9: {');
+ const usbEnd=src.indexOf('/// MENU (no action)',usbStart);
+ if(usbStart<0||usbEnd<=usbStart)throw Error('USB_ACTION_SECTION_MISSING');
+ const usb=src.slice(usbStart,usbEnd);
+ const feed=usb.indexOf('usbParser.feed((uint8_t)Serial.read(),millis());');
+ const tick=usb.indexOf('usbParser.tick(millis());');
+ if(feed<0||tick<=feed)throw Error('QUEUED_UART_NOT_BEFORE_QUIET_TICK');
+ if(!usb.includes('if (!usbDropUntilEmpty && !Serial.available()) {'))
+   throw Error('QUIET_TICK_NOT_GATED_ON_EMPTY_SERIAL_QUEUE');
  if(src.includes('Serial.parseInt()'))throw Error('BLOCKING_PARSE_LEFT');
  if((src.match(/if \(!hwMotorAllowed\(\)\)/g)||[]).length!==2)
   throw Error('MOTOR_PULSE_GUARD_CHANGED');
@@ -46,7 +55,7 @@ function audit(src,old){
  if((src.match(/for \(int i=0; i < 11; i\+\+\)/g)||[]).length!==2)
   throw Error('LEGACY_EEPROM_LOOP_CHANGED');
  if(!src.includes('delay(700)'))throw Error('SAVE_PATH_CHANGED');
- return need.length+8;
+ return need.length+10;
 }
 try{
  const old=fs.readFileSync(path.join(root,'Peristaltic_Pump_Software_v1.05.ino'),'utf8');
@@ -55,12 +64,13 @@ try{
  const mutants=[
   src.replace('case perpompa_usb::kStop:','case perpompa_usb::kNone_STOP_BROKEN:'),
   src.replace('if (!hwMotorAllowed())','if (true)'),
-  src.replace('usbParser.feed((uint8_t)Serial.read(),millis());','usbParser.feed(0,millis());')
+  src.replace('usbParser.feed((uint8_t)Serial.read(),millis());','usbParser.feed(0,millis());'),
+  src.replace('if (!usbDropUntilEmpty && !Serial.available()) {','if (true) {')
  ];
  for(const mutant of mutants){
   let blocked=false;try{audit(mutant,old);}catch(e){blocked=true;}
   if(!blocked)throw Error('NEGATIVE_MUTANT_ESCAPED');
  }
  console.log('P002_USB_CANDIDATE_SOURCE_CHECK='+count+'/'+count+
-   ' PASS; MUTANTS=3/3 BLOCKED; ACTIVE_INO_UNCHANGED; FULL_CPP=NOT_RUN; AVR=NOT_RUN');
+   ' PASS; MUTANTS=4/4 BLOCKED; ACTIVE_INO_UNCHANGED; FULL_CPP=NOT_RUN; AVR=NOT_RUN');
 }catch(e){console.error('P002_USB_CANDIDATE_SOURCE=BLOCKED '+e.message);process.exitCode=2;}
