@@ -108,3 +108,7 @@ Kullanıcı Windows PowerShell + Arduino CLI + AVR kart/kütüphaneleriyle aday�
 
 **Durum:** Kaynağa dayalı üreticinin JavaScript sözdizimi PASS, 4 fonksiyon ve 3 aday yaması ayrıştırılabilir; **üretilen tam C++ dosyasının gerçek native derlemesi/çalıştırması henüz NOT_RUN**. Test aracının varlığını PASS sayma. P0-01 aday için Windows Arduino 2/2 AVR derleme PASS korunur. Üretim firmware .ino değişmedi ve endüstriyel RELEASE_BLOCKED.
 
+
+## Risk önceliği devri — P0-01 tam döngü aracı sonrası (2026-10-31)
+
+Özgün `setup()`, geçersiz EEPROM Remote alanını 0 (Hold) yapıyor; Hold ve D5 LOW'da açılışta `remote_start()` çağrısı var: **R-001 SOURCE_CONFIRMED / HW NOT_RUN**. USB aktif modda yabancı `inChar` işleme alınmıyor, `usb_start` korunuyor ve `RNG` idle yapılmıyor: **R-007 SOURCE_CONFIRMED / FULL_LOOP_CPP NOT_RUN**. Yeni [tests/p0-01-full-loop-host.cjs](tests/p0-01-full-loop-host.cjs), bu durumları ayrı açık risk olarak test etmek için hazırlandı; yalnız kaynak+JS yapı kontrolü yapıldı, gerçek C++ tam döngü çıktısı **henüz NOT_RUN**. P0-01'in geçerli matematik davranışı ve aday iki AVR derlemesi PASS kanıtı korunur. Çalışan `.ino` yaması main'e aktarılmadı; endüstriyel kabul BLOCKED. R-001 bağımsız emniyet değerlendirmesi olmadan sessizce Remote Hold davranışı değiştirilmesin.
