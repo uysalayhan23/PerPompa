@@ -20,3 +20,7 @@ Geçerli parametreleri koruyan hesap adayında: hacim/hız <=0, geçersiz mode/d
 4. Motor sürücüsü, elektrik emniyeti ve debi fiziksel kabulü ayrıca `NOT_RUN`. Ticari `RELEASE_BLOCKED`.
 
 **Fayda/riski:** Bilinmeyen girişlerde kontrolsüz hız/step riskini azaltır; düşük hızları reddetmek ürünün kullanılabilir aralığını daraltabilir. Gerçek ihtiyaç ve tasarım limitleri henüz belirlenmeden bütün düşük hızları otomatik destekliyormuş gibi gösterme. Düzeltmeyi hiç uygulamamak, doğrulanmış sıfır/negatif giriş kusurunu açık bırakır; test kapısı geçmeden uygulamak ise yeni motor/stop riski yaratabilir.
+
+## Tamamlayıcı gerçek kaynak STEP/RNG host testleri (2026-10-31)
+
+`tests/p0-01-step-baseline.cpp`: özgün `dose` ve `pump` gövdeleri yalnız GPIO/delay mocklarıyla g++ C++17, AddressSanitizer + UBSan altında sınandı. 2 normal motor fonksiyonu davranışı ve 0 hedefte 0 pulse PASS; **`pump(0)` ve `dose(1,0,...)` için STEP HIGH+LOW darbesi ve RNG HIGH yeniden üretildi**. Test gerçek motor sürme uygulaması değildir. Nihai adayın `STEP=0` başarısızlık kapısı buradan gerektirir.

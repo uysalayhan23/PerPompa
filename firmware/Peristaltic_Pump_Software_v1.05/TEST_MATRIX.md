@@ -30,3 +30,5 @@ G01–G10 ürün release kapıları [INDUSTRIAL_RELEASE_GATE.md](INDUSTRIAL_RELE
 - `HOST_CPP` özgün hesap fonksiyonu: 4 normal PASS; sıfır cal ve sıfır hız için 2 sanitizer hata reproduksiyonu; negatif hız ve 16 bit alt-dilimi sınırları ayrı REVIEW.
 - İzole geçici **aday** C++: 4 normal + 16 negatif + 3098 geçerli değer paritesi PASS. Aday sonuçları özgün kaynak düzeltmesi veya motor çıkışı kabulü değildir. Detay [P0_01_CANDIDATE.md](P0_01_CANDIDATE.md).
 - `AVR_COMPILE`, `FULL_FIRMWARE_NATIVE`, `HW_BENCH`, `HW_PUMP`: **NOT_RUN**. `P0-01` firmware değişikliği **BLOCKED**, üretim sürümü **RELEASE_BLOCKED**.
+
+- `HOST_CPP` STEP/RNG mock: `dose(2,625)`, `pump(625)`, `dose(0,0)` pozitif PASS; `pump(0)`, `dose(1,0)` **istenmeyen STEP darbesi ve RNG aktif** yeniden üretildi; [tests/p0-01-step-baseline.cpp](tests/p0-01-step-baseline.cpp). Tam Arduino, gerçek zaman/donanım = NOT_RUN.
