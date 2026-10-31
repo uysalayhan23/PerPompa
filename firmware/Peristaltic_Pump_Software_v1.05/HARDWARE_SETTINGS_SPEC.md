@@ -1,5 +1,5 @@
 # PerPompa v1.05 — Kurulum Donanım Ayarları Tasarımı
-**Kayıt:** 2026-10-31 | **Durum:** SPEC + gerçek bağımsız profil header HOST_CPP 125/125 × 8/16 MHz PASS; UI/aktif firmware entegrasyonu UYGULANMADI | **Bağlı:** HW-SETUP-01B, P0-02 ve endüstriyel release kapıları
+**Kayıt:** 2026-10-31 | **Durum:** SPEC + profil HOST_CPP 125/125 ×2 + bağımsız runtime/EEPROM/LCD/START HOST_CPP 486/486 ×2 PASS; UI/aktif firmware entegrasyonu UYGULANMADI | **Bağlı:** HW-SETUP-01C, P0-02 ve endüstriyel release kapıları
 
 ## Sürücü tercihi — kullanıcı kararı (2026-10-31)
 
@@ -58,3 +58,17 @@
 ### Yeni kaynak durumu — 2026-10-31
 
 `hw-setup-profile.h` bağımsız, henüz aktif `.ino` içinden çağrılmayan doğrulayıcıdır; `tests/hw-setup-profile-native.cpp` g++/UBSan ile iki F_CPU profilinde 125'er pozitif-negatif kontrol PASS gösterdi. Eski EEPROM 0..21 korunur; 32/48 önerilen yeni slotlar **henüz firmware'de kullanılmıyor**. `INTEGRATION/AVR_FOR_HW_SETUP/HW_BENCH=NOT_RUN`. Kullanıcı açık onaylı fiziksel sürücü/board uyumu ve kart üzeri güvenlik testleri olmadan motorun emniyetli olduğu iddia edilmez.
+
+## HW-SETUP-01B — bağımsız EEPROM/START/LCD adaptör kanıtı (2026-10-31)
+
+**Baz:** `main 0e2ff55983912bda580722b98f8e41f53d245bfc`; P0-01 kabul edilmiş aktif `.ino` blob `6617cc38bde9bddf1c32cd0506915c0054556127` **korundu**; v1.04 arşivi, `AGENTS.md` ve `REVISION_MANIFEST.md` korunur. Önceki P0-01 32/32 full-loop, 42/42 seçilmiş kaynak, iki AVR derleme PASS ve HW profil modülü 125/125 × 2 PASS yeniden koşulmadı.
+
+**Gerçek bağımsız C++11 kaynak/test dosyaları:** `hw-setup-runtime.h` (Git blob `574920f1228bc7db9237a816a3a6fab7dce85eb2`), `tests/hw-setup-runtime-native.cpp` (`0ba7d885e29c039eab00c695706a9c02284a73c7`), `tests/hw-setup-runtime-gate.cjs` (`b6cc4368f68713a33a2f36ee917320d4066b1aac`), `tests/hw-setup-runtime-avr-gate.cjs` (`b7c7c8a72a4ff927a76758657b56a682e9acdc71`), `HW_SETUP_01B_INTEGRATION_PLAN.md` (`d586ce758bf8629720ed31f48a25d501188f3d69`).
+
+**Kapsam:** Eski EEPROM 0–21 dokunulmaz. Profiller 32–43 ve 48–59 sürümlü/CRC'li iki slotta, bağımsız motor izni baytı 64'te tutulacak şekilde bağımsız adaptör hazırlandı. Boş/hatalı/onaysız profilde izin yok. A4988 sadece öneri; DRV8825 alternatif; `F_CPU` 8/16 MHz ve 1/4 mikro-adım onay eşleşmesi gerekli. Kurulum yalnız motor/Remote/USB idle iken açılır; girişte izin kilidi yazılır; yarım EEPROM güncellemesi eski profili yeniden yetkilendirmeden başarısız olur; açık fiziksel onay, commit sonu ve geri okuma kontrolünden sonra izin verilir. Yerel/Remote/USB Dose/Pump/Cal için **dokuz ayrı START izni**, STOP reddi ve 16×2 LCD iki satır metni adaptörde modeller. Adaptör **henüz aktif .ino içinden çağrılmıyor**, dolayısıyla mevcut motora yeni güvenlik sağlamaz.
+
+**Gerçek native test:** C++11 `g++ -Wall -Wextra -Werror -pedantic -fsanitize=undefined` ile `-DF_CPU=16000000UL` için **486/486 PASS** ve `-DF_CPU=8000000UL` için **486/486 PASS**. Ek Clang `8000000UL` **486/486 PASS**. EEPROM inhibit kontrolünü silen **geçici negatif mutant**, `HW_SETUP_RUNTIME_FAIL: power loss during setup locks previous profile` verip exit **1** ile yakalandı. Mutant GitHub'a gönderilmedi. QA aracı `HW_SETUP_RUNTIME_CPP_TWO_FCPU_PASS=2/2` döndürdü. İki kart profili burada yalnız host `F_CPU` makrolarıyla sınandı; Arduino Pro Mini binary derlemesi değildir.
+
+**Açık kabul:** Bağımsız AVR probe için araç hazır ama **AVR_PROBE=NOT_RUN**; kabul edilmiş .ino içinde `setup()/loop()` entegrasyonu **NOT_RUN**, entegre 8/16 MHz Arduino derlemesi **NOT_RUN**, gerçek STEP/RNG/LCD/Remote/USB/HW **NOT_RUN**, P0-02 STOP latency **REVIEW**, endüstriyel `RELEASE_BLOCKED`. EEPROM tek bayt inhibit fiziksel kilit değildir; inhibit baytının kendisi yazılırken güç kaybının elektriksel etkileri, donanım brownout ve bağımsız güvenlik HIL'i ayrıca REVIEW.
+
+**Sonraki tek iş:** HW-SETUP-01C — mevcut 11 menü kaydını ve 0–21 EEPROM adreslerini bozmadan yeni HW Setup sayfasının gerçek `setup()/loop()` motor START/STEP/STOP girişlerine bağlanan **geçici kaynak yamasını** üret; özgün tam loop pozitif-negatif, Remote/USB/Local/Cal, LCD/EEPROM ve iki gerçek AVR derleme kapıları PASS olursa ancak o zaman aktif firmware değişikliğini `[skip ci]` ile main'e taşı. Fiziksel ve release kilitlerini koru.
