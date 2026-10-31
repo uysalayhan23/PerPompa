@@ -4,20 +4,23 @@ Arduino Pro Mini ile çalışan peristaltik pompa için yazılım, Türkçe kull
 
 ## Sürüm politikası
 
-- **v1.04:** Korunan referans yazılım; üretim/donanım kabulü ayrıca doğrulanmalıdır.
-- **v1.05 (geliştirme):** [`firmware/archive/Peristaltic_Pump_Software_v1.05`](firmware/archive/Peristaltic_Pump_Software_v1.05) altında ayrı çalışma kopyası. Başlangıç kodu v1.04 ile birebir aynıdır; henüz motor veya kullanıcı davranışında değişiklik yoktur. Geliştirme notları kendi README dosyasındadır.
+- **v1.04:** [`firmware/archive/Peristaltic_Pump_Software_v1.04`](firmware/archive/Peristaltic_Pump_Software_v1.04) içinde korunan referans sürüm.
+- **v1.05 (geliştirme):** [`firmware/Peristaltic_Pump_Software_v1.05`](firmware/Peristaltic_Pump_Software_v1.05) altında aktif çalışma kopyası. Başlangıç kodu v1.04 ile birebir aynıdır; henüz motor veya kullanıcı davranışında değişiklik yoktur. Geliştirme notları kendi README dosyasındadır.
 
 ## Dosyalar
 
+| [Aktif yazılım v1.05](firmware/Peristaltic_Pump_Software_v1.05/Peristaltic_Pump_Software_v1.05.ino) | v1.04 ile aynı kod, yeni geliştirmelerin başlangıç noktası |
+| [v1.05 README](firmware/Peristaltic_Pump_Software_v1.05/README.md) | Geliştirme planı ve kabul kuralları |
+
 | Dosya | İçerik |
 |---|---|
-| [Güncel yazılım v1.04](firmware/Peristaltic_Pump_Software_v1.04/Peristaltic_Pump_Software_v1.04.ino) | Pompa kontrolü, Remote Pins start/stop, RNG çalışma sinyali ve iyileştirilmiş encoder/menü kullanımı |
-| [v1.04 sürüm notları](firmware/Peristaltic_Pump_Software_v1.04/README.md) | Değişiklikler, test edilen davranışlar ve henüz doğrulanmayan noktalar |
+| [Arşivlenen v1.04](firmware/archive/Peristaltic_Pump_Software_v1.04/Peristaltic_Pump_Software_v1.04.ino) | Pompa kontrolü, Remote Pins start/stop, RNG çalışma sinyali ve iyileştirilmiş encoder/menü kullanımı |
+| [v1.04 arşiv notları](firmware/archive/Peristaltic_Pump_Software_v1.04/README.md) | Değişiklikler, test edilen davranışlar ve henüz doğrulanmayan noktalar |
 | [Türkçe kullanıcı kılavuzu](docs/Peristaltik_Pompa_Kullanici_Kilavuzu_v1.04.pdf) | Ürün, ilk start, menüler, çalışma modları, kalibrasyon, Remote Pins ve RNG kuru kontak anlatımı |
 | [Teknik bağlantı README](docs/README_Remote_Pins_RNG_Devre.md) | D5 Remote Pins girişi, A0 RNG sinyali, iç röle sürücüsü ve PLC bağlantı notları |
 | [Teknik devre şeması](docs/Remote_Pins_RNG_Devre_Semasi.pdf) | Remote Pins ve RNG bağlantılarının iki sayfalık çizimi |
 | [Kılavuz kapak görseli](docs/assets/cover_no_text.png) | Yan panel yazısı kaldırılmış ürün fotoğrafı |
-| [Önceki yazılımlar](firmware/archive) | Kaynak v1.01 ile geliştirme sürecindeki v1.02 ve v1.03 sürümleri |
+| [Önceki yazılımlar](firmware/archive) | v1.01–v1.04 önceki sürümleri |
 
 ## Pompanın çalışma şekli
 
@@ -31,7 +34,7 @@ Arduino Pro Mini ile çalışan peristaltik pompa için yazılım, Türkçe kull
 
 ## Yazılımı açma
 
-1. [Güncel `.ino` dosyasını](firmware/Peristaltic_Pump_Software_v1.04/Peristaltic_Pump_Software_v1.04.ino) bulunduğu klasörle birlikte Arduino IDE'de açın.
+1. [Aktif v1.05 `.ino` dosyasını](firmware/Peristaltic_Pump_Software_v1.05/Peristaltic_Pump_Software_v1.05.ino) bulunduğu klasörle birlikte Arduino IDE'de açın.
 2. Arduino Pro Mini kartını ve kartınızın gerçek saat/gerilim seçeneğini belirleyin.
 3. `ClickEncoder` ve `TimerOne` kütüphanelerini kurun. `LiquidCrystal` ve `EEPROM` de kullanılır.
 4. Devre bağlantılarını teknik şemaya göre kontrol edip yazılımı karta yükleyin.
@@ -40,7 +43,7 @@ PLC'nin 24 V çıkışını Remote Pins girişine doğrudan bağlamayın. A0 pin
 
 ## Sürüm durumu
 
-v1.04 için yerel C++ sözdizimi kontrolü ve simüle menü ile Pump start/stop denemeleri geçti. Bu çalışma sırasında Arduino derleyicisi ve fiziksel kart bulunmadığından gerçek kart derlemesi ve donanım testi henüz yapılmadı. Encoderın mekanik tık yapısına göre `ENCODER_STEPS_PER_NOTCH` değerinin doğrulanması gerekebilir.
+v1.05 henüz v1.04'ten kopyalanmış geliştirme sürümüdür; yeni sürüm için derleme veya fiziksel kabul yapılmadı. v1.04 için yerel C++ sözdizimi kontrolü ve simüle menü ile Pump start/stop denemeleri geçti. Bu çalışma sırasında Arduino derleyicisi ve fiziksel kart bulunmadığından gerçek kart derlemesi ve donanım testi henüz yapılmadı. Encoderın mekanik tık yapısına göre `ENCODER_STEPS_PER_NOTCH` değerinin doğrulanması gerekebilir.
 
 ## Kaynak ve kütüphaneler
 

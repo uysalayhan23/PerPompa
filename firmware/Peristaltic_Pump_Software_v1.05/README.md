@@ -3,13 +3,13 @@
 **Durum:** Geliştirme başlangıcı / fiziksel kabul edilmedi  
 **Tarih:** 2026-10-31  
 **Temel sürüm:** v1.04 (`main`, başlangıç HEAD `b3b7b2fb859534ae2e7be5edb35da92c7f1cd690`)  
-**Konum:** `firmware/archive/Peristaltic_Pump_Software_v1.05/`
+**Konum:** `firmware/Peristaltic_Pump_Software_v1.05/`
 
 ## Sürümün oluşturulması
 
-Bu klasördeki `Peristaltic_Pump_Software_v1.05.ino` dosyası v1.04 kaynak dosyasının **değiştirilmemiş kopyasıdır**. Dosya adı v1.05 olarak düzenlenmiş, ancak kodun içeriği ve kontrol mantığı henüz değiştirilmemiştir. `firmware/Peristaltic_Pump_Software_v1.04/` referans sürüm olarak korunur.
+Bu klasördeki `Peristaltic_Pump_Software_v1.05.ino` dosyası v1.04 kaynak dosyasının **değiştirilmemiş kopyasıdır**. Dosya adı v1.05 olarak düzenlenmiş, ancak kodun içeriği ve kontrol mantığı henüz değiştirilmemiştir. `firmware/archive/Peristaltic_Pump_Software_v1.04/` arşivlenmiş referans sürüm olarak korunur.
 
-> `archive` dizini içinde bulunması, v1.05'in tamamlandığı anlamına gelmez; kullanıcının isteğiyle burada üzerinde çalışılacak sürüm tutulur.
+> v1.05 aktif geliştirme sürümüdür; henüz tamamlanmış veya fiziksel olarak kabul edilmiş değildir.
 
 ## Devam eden fonksiyonlar (v1.04 ile aynı)
 
