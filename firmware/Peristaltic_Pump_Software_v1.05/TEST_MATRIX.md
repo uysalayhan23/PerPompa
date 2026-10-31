@@ -198,3 +198,14 @@ Tek komut (repo ZIP kökünde, Node ve native g++ ve Arduino CLI kurulu ise):
 **Kapanmamış kapılar:** `HW_01C_FULL_SETUP_LOOP_CPP=NOT_RUN`, `HW_01C_AVR_16MHZ=NOT_RUN`, `HW_01C_AVR_8MHZ=NOT_RUN`; bu nedenle **HW Setup entegrasyonu aktif .ino'ya yazılmadı**. Ayrıca kaynak adayının gerçek STEP başına EEPROM okumasının darbe periyoduna ve **P0-02 stop gecikmesine etkisi REVIEW** (hız, fiziksel timing ve jitter ölçümü gerekir); elektronik brownout/inhibit byte atomikliği REVIEW. `HW_BENCH/HW_PUMP/USER_ACCEPTANCE=NOT_RUN`, endüstriyel `RELEASE_BLOCKED`.
 
 **Sıradaki güvenli kapı:** Doğrulanmış güncel repo ZIP kökünde `node firmware/Peristaltic_Pump_Software_v1.05/tests/hw-setup-01c-qa.cjs` komutu (native C++17 + UBSan ve Arduino CLI 8/16 core gerekir). Gerçek host/AVR PASS çıktısı olmadan yeni firmware blob üretim main'e aktarılamaz. Test kusuru çıkarsa en küçük testli kaynak yamasıyla düzelt; P0-01'i ve ürün/release kilitlerini koru.
+
+
+## 2026-10-31 — HW-SETUP-01C Windows gerçek QA + P0-02 STEP sıcak-yol engeli
+
+**Kullanıcının Windows PowerShell kanıtı**: geçici, gerçek v1.05 kaynaktan üretilmiş HW Setup adayının `setup()/loop()` C++ regresyonu **16MHz 52/52 PASS** ve **8MHz 52/52 PASS**. Arduino CLI gerçek AVR derlemeleri **16MHz PASS** (19.254/30.720 Flash, 990/2048 RAM) ve **8MHz PASS** (19.250/30.720 Flash, 990/2048 RAM). `HW_SETUP_01C_SOFTWARE_QA=PASS`, exit **0**. Fiziksel test yapılmadı. C++ derleyicisinin önceden var olan `menu[].suffix=="uL"` / `"uL/min"` işaretçi eşitliği ve enum switch eksikleri için verdiği **dört warning** ayrı REVIEW; uyarılar PASS demek değildir.
+
+**Ek kaynak denetimi ile kanıtlanan sıcak-yol kusuru:** `SafeSetup::permit()` her başarılı çağrıda 1 izin baytı ve iki 12-bayt profil slotunu okuyor: **25 EEPROM.read/izin**. Geçici adayın `case 0` / USB `case 9` ile `dose()/pump()` gerçek STEP yolunda iki `hwMotorAllowed()` çağrısı var: **50 EEPROM.read / yetkili STEP**. `tests/hw-setup-01c-step-timing-gate.cjs` gerçek kaynak yollarından bunu hesaplayıp **`HW_SETUP_01C_TIMING_GATE=BLOCKED`, exit 2** verdi. Bu **kaynak-audit bulgusudur**, gerçek AVR mikrosaniye ölçümü değildir.
+
+**Kabul ayrımı:** `FULL_SETUP_LOOP_CPP=52/52×2 PASS`, `AVR_COMPILE=2/2 PASS`, **`STEP_TIMING_REGRESSION=BLOCKED/REVIEW`**. Yeni adayın gerçek frekansına, STOP tepki süresine ve P0-02'ye etkisi bilinmediği için **aktif .ino teslimi HOLD**. Kilitli P0-01 firmware Git blob **`6617cc38bde9bddf1c32cd0506915c0054556127`**, v1.04, AGENTS, manifesto değişmedi; `HW_BENCH/HW_PUMP=NOT_RUN`, `RELEASE_BLOCKED`.
+
+**Sıradaki iş:** STOP/izin iptali davranışını koruyarak her STEP'teki 2× tam EEPROM profil taramasını kaldıran güvenli aday geliştirmek; CRC bozulması, EEPROM izin iptali, yerel/USB/Remote Dose/Pump/Cal, 16×2 LCD ve encoder negatif regresyonunu yeniden çalıştırmak. Değişmiş kaynak için **yeni** gerçek full-loop C++ ve iki AVR derlemesi zorunlu. P0-02 fiziksel zamanlama ayrıca REVIEW.
