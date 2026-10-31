@@ -2,6 +2,11 @@
 
 Arduino Pro Mini ile çalışan peristaltik pompa için yazılım, Türkçe kullanıcı kılavuzu ve Remote Pins/RNG devre notları.
 
+## Sürüm politikası
+
+- **v1.04:** Korunan referans yazılım; üretim/donanım kabulü ayrıca doğrulanmalıdır.
+- **v1.05 (geliştirme):** [`firmware/archive/Peristaltic_Pump_Software_v1.05`](firmware/archive/Peristaltic_Pump_Software_v1.05) altında ayrı çalışma kopyası. Başlangıç kodu v1.04 ile birebir aynıdır; henüz motor veya kullanıcı davranışında değişiklik yoktur. Geliştirme notları kendi README dosyasındadır.
+
 ## Dosyalar
 
 | Dosya | İçerik |
