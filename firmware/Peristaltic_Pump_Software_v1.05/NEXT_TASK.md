@@ -28,6 +28,16 @@ Güncel kaynak `main` başlangıç HEAD `e6875170ae886e750bdaf70c84428e9484b5c3e
 - Açık risk: Pump invalid geri dönüşü `in_action` / USB kalıcı çalışma durumunu otomatik temizlemez; `loop()` ve USB dahil tam entegrasyon kanıtı olmadan `.ino` commit yok.
 - **Firmware/source SHA değişmedi**; arşiv kilitli. `AVR_ARDUINO_BUILD`, `FULL_LOOP_CPP`, `HW_BENCH`, `HW_PUMP` = NOT_RUN. `RELEASE_BLOCKED`.
 
+## Yeni donanım kurulum talebi — HW-01 (kullanıcı, 2026-10-31)
+
+**İstenen seçenekler:** Arduino Pro Mini **5 V/16 MHz** veya **3.3 V/8 MHz**; sürücü **A4988** veya **DRV8825** (kullanıcının "DRV88225" yazımı DRV8825 olarak yorumlandı). Kullanıcı kurulum sırasında menüden seçecek; bu seçim **fiziksel clock/voltajı değiştirmez**, eşleşen iki ayrı `F_CPU` derlemesi gerektirir. Sürücü/mikrostep otomatik algılanmaz.
+
+- **Tasarım/tekrar edilebilir kaynak:** [HARDWARE_SETTINGS_SPEC.md](HARDWARE_SETTINGS_SPEC.md)
+- **Host model:** [tests/hw-profile-gate.cpp](tests/hw-profile-gate.cpp); **19/19 HOST_CPP MODEL PASS** (g++17 ASan/UBSan). Bu gerçek firmware menüsü veya kart kabulü değildir.
+- **Uygulama statüsü:** **DESIGN_PASS / FIRMWARE_NOT_STARTED / AVR_ARDUINO_BUILD=NOT_RUN / HW=NOT_RUN**. Tam menü kurulumu, EEPROM sürümlemesi, default/restart kilidi ve dört profil için testler zorunlu.
+- **Öncelik:** P0-01 sayısal emniyet kapısına entegre tasarım bağımlılığı; P0-01 güvenle teslim edilmeden HW-01 nedeniyle aktif .ino'ya menü/refactor yapma. P0-01 ardından HW-01'i P1 kullanılabilirlikten önce ele al.
+- **Kullanıcıdan ileride gereken fiziksel kontrol:** Kartın üzerindeki gerçek clock/gerilim işareti, kurulu sürücünün gerçekten A4988 veya DRV8825 olması, ve sürücünün mikro-adım modunun 1/4 olarak teyidi. Bu bilgiler fiziksel kabulün parçasıdır.
+
 ## P0-01 kapsamı
 
 1. İlgili gerçek kaynak: `steps_calc`, `delay_us_calc`, `dose`, `pump`, çağıran `loop/setup`.

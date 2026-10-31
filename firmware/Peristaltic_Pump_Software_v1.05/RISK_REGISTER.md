@@ -18,3 +18,6 @@ Risk seviyesi ilk triage içindir; FMEA sayısal S/O/D puanları, ürün kullan�
 | R-012 | R0 | Yazılımın tek başına emniyet işlevi sanılması | Ayrı emniyet donanımı gösterilmedi | Risk değerlendirme, uygun güvenlik mimarisi uzman denetimi | NOT_RUN |
 
 **Sıra:** R0 bağımsız tehlike analizi ilk iş; firmware değişikliğinde manifestin tek aktif P0-01 işi korunur. Kritik gözlemler yeni kanıt geldikçe tarihlenmiş olarak güncellenir. Bu kayıt, donanımda ölçülmüş arıza anlamına gelmez.
+
+| R-013 | R0 | Menüde seçilen board profili gerçek MCU/derleme ile uyumsuz; saat/timing ve motor davranışı belirsiz | 8/16 MHz ayrı `F_CPU` derlemesi gerekir, menü fiziksel frekansı değiştiremez | Kurulum onayı, build-profile fail-closed, gerçek osilatör/gerilim teyidi | DESIGN / HW NOT_RUN |
+| R-014 | R1 | Sürücü mikro-adım fiziksel ayarı yazılımdaki 1/4 ile uyumsuz → sessiz doz hatası | Sabit `STEP_MODE=4`, yalnız STEP/DIR pinleri yazılımdan sürülüyor | Montaj standardı, 800 STEP/tur kontrolü, sıvı metroloji | DESIGN / HW NOT_RUN |

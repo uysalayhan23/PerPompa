@@ -37,3 +37,9 @@ G01–G10 ürün release kapıları [INDUSTRIAL_RELEASE_GATE.md](INDUSTRIAL_RELE
 
 `tests/avr-object-probe.cjs` gerçek .ino hesap fonksiyonlarını çıkarıp `clang++ --target=avr -mmcu=atmega328p` ile 8 MHz + 16 MHz nesneler üretmek için eklendi; yerel özgün hesap gövdesi denemesinde **2/2 AVR_OBJECT_PASS**, **2 warning per target** (`conv` geçersiz mode için başlatılmamış). **Tam Arduino/avr-gcc derlemesi değil.**
 `tests/p0-01-output-candidate.cpp`: **18/18 HOST_CPP adaya ait çıktı regresyonu PASS**, no-STEP/no-RNG invalid girişlerde; ancak tam `loop()` test ve gerçek kart NOT_RUN.
+
+## M13 — HW-01 Kurulum profili (2026-10-31)
+
+- Pozitif: 5V/16MHz+A4988, 5V/16MHz+DRV8825, 3.3V/8MHz+A4988, 3.3V/8MHz+DRV8825; doğru Arduino hedef derlemesi ve cihazda güvenli başlangıç.
+- Negatif: yanlış `F_CPU`, eski/boş/bozuk EEPROM, geçersiz sürücü, kaydedilmemiş kurulum, 1/4 dışı mikro-step, motor/Remote aktifken ayar değiştirme. STEP çıkışı ve RNG idle kriterleri.
+- Host `tests/hw-profile-gate.cpp`: **19/19 PASS** (yalnız bağımsız konfigürasyon mantığı modelidir); gerçek LCD/encoder/EEPROM/AVR firmware ve donanım **NOT_RUN**. Kaynak: [HARDWARE_SETTINGS_SPEC.md](HARDWARE_SETTINGS_SPEC.md).

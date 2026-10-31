@@ -20,6 +20,10 @@
 
 Bu dokümanlar **uygunluk sertifikası veya bağımsız laboratuvar testi değildir**. Birden fazla yapay zekâ rolünün değerlendirmesi bağımsız uzman sertifikası sayılmaz. Kök AGENTS.md ve kilitli REVISION_MANIFEST.md aynen geçerlidir.
 
+## Kurulum donanım profilleri (tasarım aşamasında)
+
+Kullanıcının talep ettiği kart/sürücü seçimleri: **Pro Mini 5V/16MHz veya 3.3V/8MHz** ve **A4988 veya DRV8825**. Ayrı [kurulum ayarları tasarımı](HARDWARE_SETTINGS_SPEC.md) ve [19 senaryolu C++ profil kapısı](tests/hw-profile-gate.cpp) hazırlandı. **Menü henüz çalışan .ino'ya eklenmedi**; iki farklı `F_CPU` için gerçek Arduino derlemesi ve fiziksel doğrulama bekliyor. Menü kartın fiziksel saatini veya gerilimini değiştirmez.
+
 ## Sürümün oluşturulması
 
 Bu klasördeki `Peristaltic_Pump_Software_v1.05.ino` dosyası v1.04 kaynak dosyasının **değiştirilmemiş kopyasıdır**. Dosya adı v1.05 olarak düzenlenmiş, ancak kodun içeriği ve kontrol mantığı henüz değiştirilmemiştir. `firmware/archive/Peristaltic_Pump_Software_v1.04/` arşivlenmiş referans sürüm olarak korunur.
