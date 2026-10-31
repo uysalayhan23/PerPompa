@@ -260,7 +260,7 @@ void setup(){
   lcd.begin(LCD_COLUMNS, LCD_ROWS);
   // Print a message to the LCD.
   menu[1].suffix = menu[2].options[menu[2].value];
-  if (menu[1].suffix=="uL"){
+  if (strcmp(menu[1].suffix,"uL")==0){
     menu[1].decimals = 0;
   } else {
     menu[1].decimals = 1;
@@ -319,6 +319,9 @@ ClickEncoder::Button b = encoder->getButton();
       encoder_last_direction = 0;
     }
     switch (b) {
+      case ClickEncoder::Open:
+      case ClickEncoder::Pressed:
+        break;
       case ClickEncoder::Clicked:
         if(menu[menu_number_1].type == VALUE ||menu[menu_number_1].type == OPTION){ // if value or option type
           in_menu =!in_menu;
@@ -484,7 +487,7 @@ if (menu_left){
   
   if (menu_number_1 == 2){
     menu[menu_number_1-1].suffix = menu[menu_number_1].options[menu[menu_number_1].value];
-      if (menu[1].suffix=="uL"){
+      if (strcmp(menu[1].suffix,"uL")==0){
         menu[1].decimals = 0;
       } else {
         menu[1].decimals = 1;
@@ -493,7 +496,7 @@ if (menu_left){
 
   if (menu_number_1 == 4){
     menu[menu_number_1-1].suffix = menu[menu_number_1].options[menu[menu_number_1].value];
-    if (menu[3].suffix=="uL/min"){
+    if (strcmp(menu[3].suffix,"uL/min")==0){
       menu[3].decimals = 0;
     } else {
       menu[3].decimals = 1;
