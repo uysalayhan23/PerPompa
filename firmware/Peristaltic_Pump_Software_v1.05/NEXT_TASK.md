@@ -3,7 +3,7 @@
 **Aktif manifest:** [REVISION_MANIFEST.md](REVISION_MANIFEST.md) v1.1 — kullanıcı onaylı tespit → onar → test → teslim → sıradaki iş döngüsü  
 **Başlangıç main HEAD:** `8624b2b78b0bcf4f83dd3388b5533b46e7b7d667` (tarihsel; her zaman canlı HEAD oku)  
 **Arşiv v1.04 kaynak blob kilidi:** `0d965c08947ba0b3170d22fbff806fc2e6f1e83a`  
-**Aktif görev:** `HW-SETUP-01C/P0-02 — 52/52 ×2 ve AVR 2/2 PASS; ancak yetkili STEP başına 50 EEPROM okuması timing REVIEW; .ino HOLD`  
+**Aktif görev:** `HW-SETUP-01D/P0-02 — 50→25 EEPROM.read/STEP kaynak optimizasyonu, yeni 01D full-loop ve çift AVR NOT_RUN, .ino HOLD`  
 **Aşama:** P0-01 aktif yazılım kaynak 32/32 tam loop + 42/42 kaynak + 2/2 AVR PASS; fiziksel ve release BLOCKED. HW-SETUP-01 SPEC/TEST_FIRST.  
 **Kod kabulü:** P0-01 SOURCE/HOST_CPP/AVR_COMPILE=PASS, yeni aktif blob `6617cc38bde9bddf1c32cd0506915c0054556127`; fiziksel HW_BENCH/HW_PUMP/USER_ACCEPTANCE NOT_RUN; RELEASE_BLOCKED.
 
@@ -225,3 +225,22 @@ Tek komut (repo ZIP kökünde, Node ve native g++ ve Arduino CLI kurulu ise):
 **Kabul ayrımı:** `FULL_SETUP_LOOP_CPP=52/52×2 PASS`, `AVR_COMPILE=2/2 PASS`, **`STEP_TIMING_REGRESSION=BLOCKED/REVIEW`**. Yeni adayın gerçek frekansına, STOP tepki süresine ve P0-02'ye etkisi bilinmediği için **aktif .ino teslimi HOLD**. Kilitli P0-01 firmware Git blob **`6617cc38bde9bddf1c32cd0506915c0054556127`**, v1.04, AGENTS, manifesto değişmedi; `HW_BENCH/HW_PUMP=NOT_RUN`, `RELEASE_BLOCKED`.
 
 **Sıradaki iş:** STOP/izin iptali davranışını koruyarak her STEP'teki 2× tam EEPROM profil taramasını kaldıran güvenli aday geliştirmek; CRC bozulması, EEPROM izin iptali, yerel/USB/Remote Dose/Pump/Cal, 16×2 LCD ve encoder negatif regresyonunu yeniden çalıştırmak. Değişmiş kaynak için **yeni** gerçek full-loop C++ ve iki AVR derlemesi zorunlu. P0-02 fiziksel zamanlama ayrıca REVIEW.
+
+
+## 2026-10-31 — HW-SETUP-01D: yinelenen EEPROM iznini kaldıran geçici aday
+
+**Başlangıç:** canlı `main 5bdd27f3e62b3b0fc2852a847fb35cdf2944160c`. Aktif v1.05 P0-01 `.ino` Git blob `6617cc38bde9bddf1c32cd0506915c0054556127` **değişmedi**. v1.04 arşiv, manifesto, `AGENTS.md`, kilitli profil/runtime başlıkları aynı. Önceki HW-SETUP-01C Windows **52/52 ×2** tam kaynak host ve **2/2 AVR** PASS ile profil **125/125 ×2**, runtime **486/486 ×2** ve P0-01 **32/32+42/42+2/2** tarihi test kanıtları aynen korundu; yeni HW-SETUP-01D'ye doğrudan aktarılmadı.
+
+**Kök kusur:** gerçek `01C` adayında her yetkili STEP için Local `case 0` / USB `case 9` içindeki `hwMotorAllowed()` ve `dose()/pump()` içindeki ikinci çağrı toplam **2 × (1 inhibit + 24 profil EEPROM) = 50 EEPROM.read / STEP** yapıyordu. Bu, P0-02 jitter/stop gecikmesi için **kaynakta kanıtlı regresyon riski**, gerçek zamanlama ölçümü değildir.
+
+**En küçük geçici `01D` düzeltmesi:** `tests/hw-setup-01d-candidate.cjs`, önceki onaylı P0-01 SHA'sını ve 14 HW Setup yamasını kilitleyen `01C` adayı üzerine dört eşleşme-kilitli kaynak değişikliği uygular. Local/USB üst işlemlerindeki **tekrar profil taraması kaldırılır**, ancak `dose()/pump()` içindeki **son STEP öncesi tam profil + CRC + arming doğrulaması korunur**; Local geçersiz mod fail-closed, Local ret STEP LOW/RNG idle ve menü çıkışı, USB ret `usb_start=false`; Remote başlatma ön kontrolü korunur. 27.237 karakterlik yeni geçici adayı oluşturur, asıl `.ino`yu değiştirmez.
+
+**Yeni gerçek kaynak denetimi:** `tests/hw-setup-01d-step-timing-gate.cjs` Local Pump/Dose/Cal + USB Pump/Dose/Cal üzerinde kaynak yollarından **25 EEPROM.read / yetkili STEP**, tek son izin kontrolü, CRC/arming/Remote izin yolu varlığını doğruladı: `HW_SETUP_01D_TIMING_GATE=SOURCE_CHECK_PASS`. İki negatif mutant: gerçek `dose()` son izni kaldırıldığında `BLOCKED exit 2`, Local üst izni geri eklendiğinde `BLOCKED exit 2`. **İlk Remote başlatmasında ek preflight halen mevcut**; ilk adımın toplam işi sıradan sonraki adımlardan farklıdır. Statik sayı AVR mikro-saniye veya jitter ölçümü değildir.
+
+**Gerçek header native kontrol:** Git blob `64157ee0ff275f2a504ef30728f94d0ff9f2f1b9` olan `tests/hw-setup-01d-runtime-hot.cpp` dosyası, değişmemiş `hw-setup-runtime.h` ve `hw-setup-profile.h` ile `g++ -std=c++11 -Wall -Wextra -Werror -pedantic -fsanitize=undefined` altında `F_CPU=16000000UL` **12/12 PASS**, `F_CPU=8000000UL` **12/12 PASS**: dokuz Local/Remote/USB izni için 25 okuma, canlı CRC bozulması sonraki kontrolde ret, inhibit byte iptali ve STOP reddi. **Bu gerçek bağımsız runtime testidir; bütün `setup()/loop()` testi değildir.**
+
+**Yeni tam kaynak QA hazır ama henüz çalıştırılmadı:** `tests/hw-setup-01d-qa.cjs`, gerçek source `.ino` + geçici `01D` yamayı derleyen mevcut 52/52×2 host testine **8 yeni pozitif-negatif kontrol** ekler: Local/USB Pump/Dose için tam **25 read/STEP**, çalışma sırasında CRC bozma ve arming iptaliyle sonraki STEP engeli, Local STOP. Yeni adaya özel **iki gerçek Arduino CLI derleme** zorunludur; ortamda Arduino CLI yok. **01D FULL_SOURCE_CPP=NOT_RUN, AVR_COMPILE_8/16=NOT_RUN, firmware main commit=HOLD**. 01D için yalnız JS sözdizimi/aday ankrajları/gerçek header native ve kaynak yükü denetimleri PASS.
+
+**P0-02 sınırı:** 50→25 EEPROM okuması kaynak düzeyinde doğrulandı; **P0-02 gerçek STEP zamanlaması, motor stop latansı, jitter, brownout/arm atomicity ve HW_BENCH/HW_PUMP = REVIEW/NOT_RUN; endüstriyel RELEASE_BLOCKED.** Motorun güvenli olduğunu yalnız simülasyondan iddia etme.
+
+**Bir sonraki geçit:** Yeni `tests/hw-setup-01d-qa.cjs` testinin **full setup/loop 16/8 MHz host pozitif-negatif + çift Arduino AVR** gerçek çıktısını al. Gerekirse hedefli kaynak kusuru düzelt; 01D motor kaynak değişikliğini ancak yeni bütün kapılar PASS ve timing/STOP riski yeterince değerlendirildiyse `[skip ci]` main'e gönder. Fiziksel STOP/ürün kabulünü yine ayrı REVIEW/BLOCKED tut.
