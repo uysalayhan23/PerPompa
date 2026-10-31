@@ -21,7 +21,7 @@ function def(name){
 const defs=['STEP_MODE','STEPS_PER_FULL_ROT','CALIBR_ROTATIONS','CALIBR_DECIMALS','MICROSEC_PER_SEC'].map(def).join('\n');
 const originalFunctions=extract('steps_calc')+'\n'+extract('delay_us_calc');
 const cxx=[
- '#include <cmath>','#include <climits>','#include <iostream>','#include <string>',
+ '#include <cmath>','#include <climits>','#include <cstdint>','#include <iostream>','#include <string>',
  defs,'const int CALIBR_DECIMAL_CORR = pow(10,CALIBR_DECIMALS);',originalFunctions,
  'int main(int argc,char**argv){',
  '  std::string mode=argc>1?argv[1]:"positive";',
@@ -60,11 +60,11 @@ try{
    if(x.status!==0&&/runtime error:|float-cast-overflow/i.test(x.stderr)){
     console.log('KNOWN_DEFECT_HOST_CPP_REPRODUCED',kind,'sanitizer='+x.stderr.trim().split('\n')[0]);
    }else{
-    console.log('NEGATIVE_NOT_CONFIRMED',kind,'status='+x.status,'stdout='+x.stdout.trim(),'stderr='+x.stderr.trim());
+    console.error('NEGATIVE_NOT_CONFIRMED',kind,'status='+x.status,'stdout='+x.stdout.trim(),'stderr='+x.stderr.trim());process.exitCode=1;
    }
   }
   x=run(exe,['overflow32']);
-  console.log(x.status===0?x.stdout.trim():'MODEL_BOUNDARY_CHECK_FAIL '+x.stderr);
+  if(x.status===0) console.log(x.stdout.trim()); else {console.error('MODEL_BOUNDARY_CHECK_FAIL',x.stderr);process.exitCode=1;}
   console.log('AVR_COMPILE=NOT_RUN HW_BENCH=NOT_RUN HW_PUMP=NOT_RUN RELEASE_BLOCKED');
  }
 }finally{fs.rmSync(tmp,{recursive:true,force:true});}

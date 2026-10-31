@@ -6,8 +6,8 @@
 
 | ID | Pozitif durum | Negatif/sınır durum | Gereken kanıt | Başlangıç durumu |
 |---|---|---|---|---|
-| M01 Dose | Ayarlı hacim adım sayısı ve bitiş | sıfır cal, aşırı steps, negatif veya sıfır hacim | Gerçek hesap fonksiyonu + step çıkışı | REVIEW |
-| M02 Pump | Geçerli hızda kararlı periyot | sıfır hız, çok düşük rpm/mL/min, overflow | AVR 8/16 MHz timing, stop | REVIEW |
+| M01 Dose | Ayarlı hacim adım sayısı ve bitiş | sıfır cal, aşırı steps, negatif veya sıfır hacim | Gerçek hesap fonksiyonu + step çıkışı | HOST_CPP normal hesap PASS / zero_cal sanitiser FAIL gözlemi; tam Dose/step REVIEW |
+| M02 Pump | Geçerli hızda kararlı periyot | sıfır hız, çok düşük rpm/mL/min, overflow | AVR 8/16 MHz timing, stop | HOST_CPP normal hesap PASS / zero_rate sanitizer FAIL gözlemi; gerçek AVR timing REVIEW |
 | M03 Cal | 30 tur 24.000 mikro-adım hedefi | bitiş/reset, sapmış süre | Native + fiziksel ölçüm | REVIEW |
 | M04 USB | p/d/c/w/x geçerli komut | boş, eksi, fazla, yarım, yabancı char, stop | Seri emülasyon + RNG | REVIEW |
 | M05 Remote Hold | D5 LOW start / HIGH stop | bounce, ilk açılış LOW, menüde LOW | Tam döngü modeli + cihaz | REVIEW |
@@ -23,4 +23,4 @@
 
 ## Endüstriyel kabul uzantısı (2026-10-31)
 
-G01–G10 ürün release kapıları [INDUSTRIAL_RELEASE_GATE.md](INDUSTRIAL_RELEASE_GATE.md) içinde takip edilir; bu test matrisi bunların yerine geçmez. [RISK_REGISTER.md](RISK_REGISTER.md) R-001–R-012 her test alanının neden gerekli olduğunu gösterir. HOST_CPP test hazırlığı [tests/native-math-harness.cjs](tests/native-math-harness.cjs) dosyasındadır: **henüz burada çalıştırılmış test yok, AVR_COMPILE ve HW_* tümü NOT_RUN.** Bir test aracının varlığı PASS değildir.
+G01–G10 ürün release kapıları [INDUSTRIAL_RELEASE_GATE.md](INDUSTRIAL_RELEASE_GATE.md) içinde takip edilir; bu test matrisi bunların yerine geçmez. [RISK_REGISTER.md](RISK_REGISTER.md) R-001–R-012 her test alanının neden gerekli olduğunu gösterir. HOST_CPP test hazırlığı [tests/native-math-harness.cjs](tests/native-math-harness.cjs) dosyasındadır: **2026-10-31 host izole hesap fonksiyonu denemesi ve koşu sonuçları HOST_CPP_EVIDENCE.md içindedir; AVR_COMPILE ve HW_* tümü NOT_RUN.** Bir test aracının varlığı PASS değildir.

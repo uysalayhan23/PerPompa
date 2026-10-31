@@ -7,7 +7,7 @@ Risk seviyesi ilk triage içindir; FMEA sayısal S/O/D puanları, ürün kullan�
 | R-001 | R0 | Boş/bozuk EEPROM Remote slotu Hold'a iner; giriş kapalıysa açılışta motoru başlatabilir | `setup()` geçersiz değeri 0 yapıyor; Hold=0 | Açılış/restart risk analizi + gerçek giriş testleri | REVIEW |
 | R-002 | R0 | Kontrol döngüsü bloklandığında stop tepkisi uzar | `pump/dose` beklemeli STEP üretimi | Maksimum kabul stop latency ve cihaz testi | REVIEW |
 | R-003 | R0 | Motor sıkışması/akış olmamasında RNG yanlış proses onayı sanılır | A0 yalnız komut edilmiş adım durumunu bildirir | Kullanım kılavuzu ve gerekiyorsa fiziksel akış izleme / bağımsız güvenlik | REVIEW |
-| R-004 | R1 | Kalibrasyon/hız sıfır → aritmetik nonfinite, geçersiz step | `steps_calc`, `delay_us_calc` | Pozitif-negatif kaynak testi; geçerli değerlerde değişmezlik | REVIEW |
+| R-004 | R1 | Kalibrasyon/hız sıfır → aritmetik nonfinite, geçersiz step | `steps_calc`, `delay_us_calc`; host C++ UBSan iki geçersiz dönüşüm raporladı | AVR ve ana fonksiyon çağıran yollar; geçerli değerlerde değişmezlik | HOST_CPP_CONFIRMED / AVR REVIEW |
 | R-005 | R1 | Düşük hız / büyük hacim → AVR int/delay sınırı | `long` gecikme `int` parametresine geçiyor | AVR 8/16MHz gerçek timing, sınır doğrulaması | REVIEW |
 | R-006 | R1 | EEPROM'dan kayıtlı CCW açılışta DIR pinine uygulanmıyor | `setup()` sabit LOW; menü güncellemesinde DIR yazılıyor | CW/CCW+enerji açılış testi | REVIEW |
 | R-007 | R1 | USB geçersiz/eksik komut aktif işlem/RNG durumunu karıştırır | `inChar` son karakter ve çalışma modu olarak kullanılıyor | Seri bozucu/fault injection ve yanlış step/RNG regresyonu | REVIEW |
