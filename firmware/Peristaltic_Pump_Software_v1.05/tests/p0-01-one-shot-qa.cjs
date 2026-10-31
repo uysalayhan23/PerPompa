@@ -26,6 +26,20 @@ function cli(){
  }
  throw Error('Arduino CLI unavailable; supply ARDUINO_CLI path');
 }
+// After acceptance, run exact active v1.05 tests without reapplying a patch.
+if(fs.existsSync(sketch) && sha(sketch)==='6617cc38bde9bddf1c32cd0506915c0054556127'){
+ try {
+  const cliPath=cli();
+  const result=cp.spawnSync(process.execPath,[path.join(__dirname,'p0-01-accepted-source-qa.cjs')],
+    {cwd:root,env:{...process.env,ARDUINO_CLI:cliPath},encoding:'utf8',timeout:540000,maxBuffer:10*1024*1024});
+  if(result.stdout)process.stdout.write(result.stdout);
+  if(result.stderr)process.stderr.write(result.stderr);
+  if(result.error||result.status!==0||!(result.stdout||'').includes('P001_ACCEPTED_SOFTWARE_QA=PASS'))
+    process.exit(2);
+  process.exit(0);
+ }catch(e){console.error('P001_ACCEPTED_SOFTWARE_QA=BLOCKED: '+e.message);process.exit(2);}
+}
+
 function check(label,script,markers,env){
  console.log('\n'+label);
  const r=cp.spawnSync(process.execPath,[path.join(__dirname,script)],{cwd:root,env,encoding:'utf8',timeout:240000,maxBuffer:5*1024*1024});

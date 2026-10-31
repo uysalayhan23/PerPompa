@@ -3,9 +3,9 @@
 **Aktif manifest:** [REVISION_MANIFEST.md](REVISION_MANIFEST.md) v1.1 — kullanıcı onaylı tespit → onar → test → teslim → sıradaki iş döngüsü  
 **Başlangıç main HEAD:** `8624b2b78b0bcf4f83dd3388b5533b46e7b7d667` (tarihsel; her zaman canlı HEAD oku)  
 **Arşiv v1.04 kaynak blob kilidi:** `0d965c08947ba0b3170d22fbff806fc2e6f1e83a`  
-**Aktif görev:** `P0-01 — aday düzeltme çift AVR derlemesi ve tam döngü güvenlik kabulü`  
-**Aşama:** TEST_FIRST → geçici P0-01 aday 8/16MHz AVR gerçek derleme PASS (2/2); FULL_LOOP kabul henüz BLOCKED. [P0_01_CANDIDATE.md](P0_01_CANDIDATE.md) kaydı oluştu.  
-**Kod kabulü:** PENDING; HOST_CPP_SOURCE_EXTRACTED_BRANCH=42/42 PASS; **AVR_COMPILE(CANDIDATE)=2/2 PASS (kullanıcı CLI)**; FULL_LOOP_CPP NOT_RUN; HW_BENCH NOT_RUN; HW_PUMP NOT_RUN; USER_ACCEPTANCE NOT_RUN.
+**Aktif görev:** `HW-SETUP-01 — A4988 ilk öneri, DRV8825 alternatif, güvenli kurulum menüsü TEST_FIRST`  
+**Aşama:** P0-01 aktif yazılım kaynak 32/32 tam loop + 42/42 kaynak + 2/2 AVR PASS; fiziksel ve release BLOCKED. HW-SETUP-01 SPEC/TEST_FIRST.  
+**Kod kabulü:** P0-01 SOURCE/HOST_CPP/AVR_COMPILE=PASS, yeni aktif blob `6617cc38bde9bddf1c32cd0506915c0054556127`; fiziksel HW_BENCH/HW_PUMP/USER_ACCEPTANCE NOT_RUN; RELEASE_BLOCKED.
 
 ## Endüstriyel ürün kontrol ekibi (2026-10-31)
 
@@ -149,3 +149,20 @@ Yeni `tests/p0-01-one-shot-qa.cjs` araç dosyası, mevcut v1.05 aktif `.ino` ve 
 Tek komut (repo ZIP kökünde, Node ve native g++ ve Arduino CLI kurulu ise):
 `node firmware/Peristaltic_Pump_Software_v1.05/tests/p0-01-one-shot-qa.cjs`.
 Çıktı `P001_R001_R007_SOFTWARE_QA=PASS` ve üç alt kapı PASS vermeden `.ino` değişikliği main'e aktarılmaz.
+
+
+## 2026-10-31 — P0-01 güvenli durum yazılım teslimi (gerçek kullanıcı QA)
+
+**Task ID:** P0-01 (aritmetik/STEP korumaları) + açık izinli R-001 Remote/EEPROM startup ve R-007 USB/STOP güvenliği. **Base main HEAD:** `54e92626ab22219712331a023109a0f176b6681b`; eski .ino blob `0d965c08947ba0b3170d22fbff806fc2e6f1e83a`; **teslim edilen yeni .ino blob:** `6617cc38bde9bddf1c32cd0506915c0054556127`; değişmez v1.04 aynı eski SHA. Commit SHA için güncel `main` kaydını doğrula.
+
+**Negatif kök kusur:** kalibrasyon/hız 0, aşırı adım veya AVR int/delay sınırında hatalı STEP/RNG; boş EEPROM Remote slotu Hold'a iner ve D5 LOW'da boot start; USB bilinmeyen bayt veya yerel menü çıkışı eski RUN/RNG göstergesini bırakabilir.
+
+**Kaynakta en küçük değişiklik:** dört aday hesap/motor fonksiyonu, üç motor çağıran yol kapısı ve yedi Remote/EEPROM/USB stop yaması, mevcut `tests/p0-01-r001-r007-candidate.cjs` ile SHA-kilitli üretilen içeriğin birebir teslimi. Pinler STEP D7/DIR D6, Remote D5, RNG A0; 200 tam adım × 1/4 = 800 STEP/devir ve 30 tur Cal korunur. **Hold LOW boot otomatik başlangıç güvenlik gerekçesiyle bilinçli olarak kaldırıldı; debounced HIGH ardından yeni LOW gerekir.**
+
+**Gerçek Windows 31.10.2026 pozitif-negatif regresyon:** Clang64 host C++ `R001_R007_FULL_LOOP_CANDIDATE_HOST_CPP=32/32 PASS`; önceki `SOURCE_EXTRACTED_BRANCH_HOST_CPP=42/42 PASS`; Arduino CLI `16MHzatmega328` 16154/30720 flash, 741/2048 SRAM **PASS**; `8MHzatmega328` 16150/30720 flash, 741/2048 SRAM **PASS**. `P001_R001_R007_SOFTWARE_QA=PASS`, exit 0. Bu veriler kullanıcının Windows derleyici çıktısından alınmıştır. İlk Clang UBSan probu PowerShell argüman hatasıyla başarısızdı, PASS sayılmıyor; sonraki gerçek 32/32 host koşusu başarılıdır.
+
+**Kod yazılım kabulü:** `SOURCE_CHECK/HOST_CPP/AVR_COMPILE=PASS`. Fiziksel kartta durma gecikmesi, akım/STEP zamanlaması, sıvı hassasiyeti, USB seri `w`/kısmi bozuk paketler, kayıtlı CCW açılışı ve G01-G10 endüstriyel kapılar **REVIEW/NOT_RUN**. `HW_BENCH/HW_PUMP/USER_ACCEPTANCE=NOT_RUN`, `RELEASE_BLOCKED`. Genel ürün veya donanım COMPLETE değil.
+
+**Yeni QA akışı:** kabul edilen aktif `.ino` blobunda `tests/p0-01-one-shot-qa.cjs`, `tests/p0-01-accepted-source-qa.cjs` dosyasına yönlenir; doğrudan aktif kaynak için gerçek setup/loop 32, tarihsel v1.04+P0-01 adayı için 42 ve doğrudan aktif kaynak için Arduino 16/8 MHz derlemesi zorunludur. Eski baseline modu korunur. Yeni test yolunun JS syntax ve sahte başarı/FAIL enjekte edilen fail-closed kontrolü PASS; **post-merge gerçek g++/Arduino tekrar koşusu NOT_RUN** (önceki gerçek *aynı blob aday* Windows koşuları PASS).
+
+**Sonraki tek aktif görev:** kullanıcı talebiyle A4988 ilk öneri, DRV8825 alternatif `HW Setup` için `HARDWARE_SETTINGS_SPEC.md` bazlı EEPROM sürümleme, konfigürasyon onayı ve `F_CPU` uyuşma güvenlik kapısını test-öncelikli tasarla. Menüyü gerekli ayrı native+AVR kapıları olmadan aktive etme. R0 P0-02 stop latency değerlendirmesi ve P0-03 USB `w`/bozuk paket analizi öncelikli REVIEW olarak kalır.

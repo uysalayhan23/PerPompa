@@ -44,6 +44,7 @@ bool encoder_hold_handled = false;
 bool remote_last_read = HIGH;
 bool remote_stable_state = HIGH;
 bool remote_started = false;
+bool remote_armed = false; // Require stable released input before first remote start.
 unsigned long remote_last_change_ms = 0;
 
 //RNG RUNNING STATUS ----------------------------------------------------------------------
@@ -136,6 +137,7 @@ void setup(){
  pinMode(REMOTE_PIN, INPUT_PULLUP);
  remote_last_read = digitalRead(REMOTE_PIN);
  remote_stable_state = remote_last_read;
+ remote_armed = (remote_stable_state == HIGH);
  digitalWrite(MOTOR_DIR_PIN,LOW);
  digitalWrite(MOTOR_STEP_PIN,LOW);
 
@@ -223,7 +225,8 @@ void setup(){
       } else if (saved_value >= 0 && saved_value <= menu[i].lim){
         menu[i].value = saved_value;
       } else {
-        menu[i].value = 0;
+        // EEPROM Remote slot: fail to Pulse, not Hold on invalid/erased data.
+        menu[i].value = (i == 10) ? REMOTE_PULSE : 0;
       }
   }
   // The new EEPROM slot may contain an uninitialized value on existing pumps.
@@ -258,10 +261,7 @@ void setup(){
   update_lcd();
   steps = steps_calc(menu[1].value, menu[2].value, menu[7].value, menu[1].decimals);
   delay_us = delay_us_calc(menu[3].value, menu[4].value, menu[7].value, menu[3].decimals);
-  // A closed Hold contact is active immediately after power-up.
-  if (menu[10].value == REMOTE_HOLD && remote_stable_state == LOW){
-    remote_start();
-  }
+  // Boot is fail-closed: even a saved Hold mode requires release and fresh closure.
   
 }
 
@@ -352,11 +352,12 @@ if (in_action){
   switch (menu_number_1){
   case 0: //Start
   if (menu[6].value == 0){ //Dose
-    if (dose(steps, delay_us, step_counter)){
+    if (steps <= 0 || delay_us < 4 || delay_us > 16000 || dose(steps, delay_us, step_counter)){
       exit_action_menu();
     }
   } else if (menu[6].value == 1){ //Pump
-    pump(delay_us);
+    if (delay_us < 4 || delay_us > 16000) exit_action_menu();
+    else pump(delay_us);
   } else if (menu[6].value == 2){ //Cal.
     if (dose(CALIBR_STEPS, CALIBR_DELAY_US, step_counter)){
       exit_action_menu();
@@ -407,11 +408,21 @@ if (in_action){
     } else if (inChar == 'x'){
       usb_start=false;
       set_rng_running(false);
+      digitalWrite(MOTOR_STEP_PIN, LOW);
+    } else {
+      // Unknown input is not a mode: discard stale RUN and output state.
+      usb_start=false;
+      set_rng_running(false);
+      digitalWrite(MOTOR_STEP_PIN, LOW);
     }
   }
   
   if (usb_start) {
-    if(inChar == 'p'){
+    if ((inChar == 'p' && (delay_us < 4 || delay_us > 16000)) ||
+        (inChar == 'd' && (steps <= 0 || delay_us < 4 || delay_us > 16000))) {
+      usb_start = false;
+      set_rng_running(false);
+    } else if(inChar == 'p'){
       pump(delay_us);
     } else if (inChar == 'd') {
       if (dose(steps, delay_us, step_counter)){
@@ -563,6 +574,11 @@ void handle_remote_input(){
   if (reading == remote_stable_state || millis() - remote_last_change_ms < REMOTE_DEBOUNCE_MS) return;
 
   remote_stable_state = reading;
+  // If the contact was LOW at boot, a debounced HIGH must be observed first.
+  if (!remote_armed){
+    if (reading == HIGH) remote_armed = true;
+    return;
+  }
   if (menu[10].value == REMOTE_HOLD){
     if (reading == LOW){
       remote_start();
@@ -582,19 +598,24 @@ void handle_remote_input(){
 //_____________________________________________________________________________________________
 
 boolean dose(long _steps, int _delay_us, long & inc) {
-      if(inc < _steps){
-        set_rng_running(true);
-        digitalWrite(MOTOR_STEP_PIN,HIGH); 
-        delayMicroseconds(_delay_us);
-        digitalWrite(MOTOR_STEP_PIN,LOW); 
-        delayMicroseconds(_delay_us);
-        inc++;
-        return false;
-      } else {
-        set_rng_running(false);
-        inc=0;
-        return true;
-      }
+  if (_steps <= 0 || _delay_us < 4 || _delay_us > 16000) {
+    digitalWrite(MOTOR_STEP_PIN, LOW);
+    set_rng_running(false);
+    inc = 0;
+    return true;
+  }
+  if (inc < _steps) {
+    set_rng_running(true);
+    digitalWrite(MOTOR_STEP_PIN, HIGH);
+    delayMicroseconds(_delay_us);
+    digitalWrite(MOTOR_STEP_PIN, LOW);
+    delayMicroseconds(_delay_us);
+    inc++;
+    return false;
+  }
+  set_rng_running(false);
+  inc=0;
+  return true;
 }
 //_____________________________________________________________________________________________
 /*
@@ -613,16 +634,24 @@ void dose_slow(long _steps, int _delay_us, long & inc) {
 //_____________________________________________________________________________________________
 
 void pump(int _delay_us) {
-        set_rng_running(true);
-        digitalWrite(MOTOR_STEP_PIN,HIGH); 
-        delayMicroseconds(_delay_us); 
-        digitalWrite(MOTOR_STEP_PIN,LOW); 
-        delayMicroseconds(_delay_us);
+  if (_delay_us < 4 || _delay_us > 16000) {
+    digitalWrite(MOTOR_STEP_PIN, LOW);
+    set_rng_running(false);
+    return;
+  }
+  set_rng_running(true);
+  digitalWrite(MOTOR_STEP_PIN, HIGH);
+  delayMicroseconds(_delay_us);
+  digitalWrite(MOTOR_STEP_PIN, LOW);
+  delayMicroseconds(_delay_us);
 }
 //_____________________________________________________________________________________________
 
 void exit_action_menu(){
    set_rng_running(false);
+   // Leaving USB/Start actions must discard stale run state.
+   usb_start = false;
+   digitalWrite(MOTOR_STEP_PIN, LOW);
    in_action = false;
    lcd.setCursor((LCD_COLUMNS - strlen(menu[menu_number_1].suffix)), 0);
    lcd.print("          ");
@@ -631,55 +660,30 @@ void exit_action_menu(){
 }
 //_____________________________________________________________________________________________
 
-long steps_calc(long volume, int unit_mode, int calibr, int decimals){ 
-//unit_mode = menu[2].value, volume = menu[1].value, calib = mL/10rot
-  
-long _steps;
-int decimal_corr;
-double conv; // rotations/volume
-double cal; //volume/rotation
-
-decimal_corr = pow(10,decimals);
-cal = calibr;
-cal = (cal/CALIBR_ROTATIONS)/CALIBR_DECIMAL_CORR;
-
-  if(unit_mode == 2){ //rot
-    conv = 1.0;
-  } else if (unit_mode == 1){ //uL
-    conv = 1.0/cal/1000;
-  } else if (unit_mode == 0){ //mL
-    conv = 1.0/cal;
-  }
-
-  _steps = STEPS_PER_FULL_ROT * STEP_MODE * conv * volume/decimal_corr;
-return _steps;
+long steps_calc(long volume, int unit_mode, int calibr, int decimals){
+  if (volume <= 0 || unit_mode < 0 || unit_mode > 2 ||
+      decimals < 0 || decimals > 3 || (unit_mode != 2 && calibr <= 0)) return 0;
+  int decimal_corr = pow(10, decimals);
+  double cal = ((double)calibr / CALIBR_ROTATIONS) / CALIBR_DECIMAL_CORR;
+  double conv = unit_mode == 2 ? 1.0 : (unit_mode == 1 ? 1.0 / cal / 1000 : 1.0 / cal);
+  double candidate = (double)STEPS_PER_FULL_ROT * STEP_MODE * conv * volume / decimal_corr;
+  // On AVR double is 32-bit float. Keep a guard margin below signed-long overflow.
+  if (!(candidate >= 1.0 && candidate <= 2147483000.0)) return 0;
+  return (long)candidate;
 }
 //_____________________________________________________________________________________________
 
 long delay_us_calc(long vol_per_min, int unit_mode, int calibr, int decimals){
-  
-double d_delay_us;
-long _delay_us;
-int decimal_corr;
-double conv; // rotations/volume
-double cal;  
-
-decimal_corr = pow(10,decimals);
-
-cal = calibr;
-cal = (cal/CALIBR_ROTATIONS)/CALIBR_DECIMAL_CORR;
-
-  if(unit_mode == 2){ //rot
-    conv = 1.0;
-  } else if (unit_mode == 1){ //uL
-    conv = 1.0/cal/1000;
-  } else if (unit_mode == 0){ //mL
-    conv = 1.0/cal;
-  }
-  
-  d_delay_us = (1/(STEPS_PER_FULL_ROT * STEP_MODE * conv * vol_per_min/decimal_corr))*60*MICROSEC_PER_SEC/2;
-  _delay_us = d_delay_us;
-  return _delay_us;
+  if (vol_per_min <= 0 || unit_mode < 0 || unit_mode > 2 ||
+      decimals < 0 || decimals > 3 || (unit_mode != 2 && calibr <= 0)) return 0;
+  int decimal_corr = pow(10, decimals);
+  double cal = ((double)calibr / CALIBR_ROTATIONS) / CALIBR_DECIMAL_CORR;
+  double conv = unit_mode == 2 ? 1.0 : (unit_mode == 1 ? 1.0 / cal / 1000 : 1.0 / cal);
+  double candidate = (1.0 / (STEPS_PER_FULL_ROT * STEP_MODE * conv *
+                     vol_per_min / decimal_corr)) * 60 * MICROSEC_PER_SEC / 2;
+  // Fail closed: AVR int is 16-bit and overly long delayMicroseconds is not supported.
+  if (!(candidate >= 4.0 && candidate <= 16000.0)) return 0;
+  return (long)candidate;
 }
 
 //_____________________________________________________________________________________________
