@@ -3,7 +3,7 @@
 **Aktif manifest:** [REVISION_MANIFEST.md](REVISION_MANIFEST.md) v1.1 — kullanıcı onaylı tespit → onar → test → teslim → sıradaki iş döngüsü  
 **Başlangıç main HEAD:** `8624b2b78b0bcf4f83dd3388b5533b46e7b7d667` (tarihsel; her zaman canlı HEAD oku)  
 **Arşiv v1.04 kaynak blob kilidi:** `0d965c08947ba0b3170d22fbff806fc2e6f1e83a`  
-**Aktif görev:** `P0-02 USB nonblocking tam setup/loop + iki AVR tek-komut QA hazır; yeni testlerin Windows gerçek sonuçları NOT_RUN; firmware HOLD, fiziksel REVIEW, release BLOCKED`  
+**Aktif görev:** `P0-02 USB QA başlık-prototip C++ sırası düzeltildi; hedefli g++ 2/2 PASS, tam loop ve AVR NOT_RUN, firmware HOLD`  
 **Aşama:** P0-01 aktif yazılım kaynak 32/32 tam loop + 42/42 kaynak + 2/2 AVR PASS; fiziksel ve release BLOCKED. HW-SETUP-01 SPEC/TEST_FIRST.  
 **Kod kabulü:** P0-01 SOURCE/HOST_CPP/AVR_COMPILE=PASS, yeni aktif blob `6617cc38bde9bddf1c32cd0506915c0054556127`; fiziksel HW_BENCH/HW_PUMP/USER_ACCEPTANCE NOT_RUN; RELEASE_BLOCKED.
 
@@ -325,3 +325,20 @@ Tek komut (repo ZIP kökünde, Node ve native g++ ve Arduino CLI kurulu ise):
 **Açık R0 sınırı:** 40 ms sessizlikle biten *son sayısal alan* aktarım kesintisinde kendisi geçerli bir sayı görünebilir; protokol sonlandırıcısı olmayan eski biçimde eksik ama sentaktik olarak geçerli son alanı her zaman güvenilir biçimde ayırmak mümkün olmayabilir. 32 byte UART budget aşımı STOP + drain; USB x fiziksel ISR önceliği değil, döngüde işlendiği anda STOP. Eski `w` kaydı senkron EEPROM beklemesi yapıyor; STEP (4–16000µs yarım-periyot), EEPROM izni (25 okuma/STEP) ve Remote 30ms debounce ile gerçek **P0-02 stop latency / jitter** ayrıca REVIEW. `HW_BENCH/HW_PUMP/USER_ACCEPTANCE=NOT_RUN`, G01–G10 fiziksel kilitleri ve endüstriyel `RELEASE_BLOCKED` devam eder.
 
 **Sonraki iş:** Windows üzerinde yeni tek-komut QA'nın gerçek 16/8MHz host C++ ve AVR çıktısını al; kanıtlı kusur çıkarsa yalnız geçici adayı minimal onar ve negatif/pozitif testleri tekrar et. Adayın tüm yeni yazılım kapıları PASS olmadan aktif `.ino` değişikliği yok, fiziksel kabul kanıtsız PASS değildir.
+
+
+## 2026-10-31 - P0-02 USB QA header/prototype native repair
+
+Verified base main: ecdabed95788d5e99fac1af9b283f6f7a9b32418. Accepted firmware SHA: 04185aaa799b0af0bfa663b8acc8f5013a515066 (UNCHANGED). v1.04 archive, AGENTS, manifest, HW headers preserved.
+
+Root issue: tests/p0-02-usb-full-loop-avr-qa.cjs generated a host C++ file with stub + prototypes + sketch. Its forward declaration for usbApplyEvent(const perpompa_usb::Event&) appeared before inclusion of p0-02-usb-parser.h, so a real C++ compiler could not resolve the namespace. This is a QA fixture bug, not an active firmware defect.
+
+Minimal repair: generated host C++ now inserts parser header after the Arduino stub and BEFORE the generated function prototypes. The active .ino, parser, driver logic and Arduino AVR sketch candidate did not change.
+
+New tests/p0-02-usb-prototype-order-gate.cjs Git blob: 778a72f8a3bd05f0cb95165c3641e6da26735745. Real g++ -std=c++11 -Wall -Wextra -Werror -pedantic -fsyntax-only at both F_CPU=16000000UL and 8000000UL: incorrect order correctly FAIL, corrected order PASS => 2/2 native PASS. SHA locked accepted firmware and parser, and verified exact new QA source ordering. Three changed Node scripts pass JavaScript syntax.
+
+One-shot QA now requires this new native gate before full C++ and true 8/16 MHz AVR compiles; it fails closed with exit 2 on any failure. Previously accepted parser 36/36x2, event dispatch 19/19x2 and source 26/26 + 3 mutants preserved, NOT rerun and NOT proof of new full-loop.
+
+Open gates: new full setup()/loop() real C++ NOT_RUN; real Arduino Pro Mini 16/8 MHz AVR candidate compiles NOT_RUN. Physical STOP latency, jitter, 40 ms framing REVIEW; HW_BENCH, HW_PUMP, user acceptance NOT_RUN; industrial RELEASE_BLOCKED. Production firmware HOLD.
+
+Next: From fresh GitHub main ZIP on Windows with clang++ and Arduino CLI, run node firmware/Peristaltic_Pump_Software_v1.05/tests/p0-02-usb-one-shot-qa.cjs. Fix any further proven source/test bug in temporary candidate only; no active firmware commit until all new host and AVR gates PASS.

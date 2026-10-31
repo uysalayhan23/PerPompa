@@ -21,6 +21,14 @@ try{
  };
  check(compiler,['--version'],'CXX_NOT_AVAILABLE');
  check(cli,['version'],'ARDUINO_CLI_NOT_AVAILABLE');
+ const prototypeGate=cp.spawnSync(process.execPath,
+   [path.join(__dirname,'p0-02-usb-prototype-order-gate.cjs')],
+   {encoding:'utf8',timeout:60000,maxBuffer:1048576,env:process.env});
+ if(prototypeGate.stdout)process.stdout.write(prototypeGate.stdout);
+ if(prototypeGate.stderr)process.stderr.write(prototypeGate.stderr);
+ if(prototypeGate.error||prototypeGate.status!==0||
+    !(prototypeGate.stdout||'').includes('P002_PROTO_HEADER_NATIVE=2/2 PASS'))
+   throw Error('P002_PROTO_HEADER_ORDER_NOT_PASSED '+(prototypeGate.error?.message||'exit '+prototypeGate.status));
  const result=cp.spawnSync(process.execPath,
    [path.join(__dirname,'p0-02-usb-full-loop-avr-qa.cjs')],
    {encoding:'utf8',timeout:240000,maxBuffer:10*1024*1024,env:process.env});

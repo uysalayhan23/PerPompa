@@ -44,7 +44,8 @@ try{
  for(const h of ['hw-setup-profile.h','hw-setup-runtime.h','p0-02-usb-parser.h'])fs.copyFileSync(path.join(root,h),path.join(dir,h));
  const prototypes=[...candidate.matchAll(/^(void|boolean|bool|int8_t|long|int)\s+([a-zA-Z_]\w*)\s*\(([^)]*)\)\s*\{/gm)].map(m=>m[1]+' '+m[2]+'('+m[3]+');').join('\n');
  const sketch=candidate.replace(/^[ \t]*#include[ \t]*<[^\r\n]*/gm,'');
- const cpp=path.join(tmp,'whole.cpp');fs.writeFileSync(cpp,stub+'\n'+prototypes+'\n'+sketch+'\n'+tests);
+ const headerPrelude='#include "p0-02-usb-parser.h"\n';
+ const cpp=path.join(tmp,'whole.cpp');fs.writeFileSync(cpp,stub+'\n'+headerPrelude+prototypes+'\n'+sketch+'\n'+tests);
  const cxx=process.env.CXX||'g++';
  for(const hz of [16000000,8000000]){
   const exe=path.join(tmp,'run-'+hz+(process.platform==='win32'?'.exe':''));
