@@ -7,6 +7,8 @@
 #include <string.h>
 #include "hw-setup-runtime.h"
 #include "p0-02-usb-parser.h"
+#include "p0-04-settings-store.h"
+bool saveSettingsAtomic();
 
 
 //LCD -----------------------------------------------------------------------------------
@@ -108,6 +110,7 @@ int menu_number_2=1;
 boolean val_change =0;
 bool hwUiActive=false;
 perpompa_hw::SafeSetup<EEPROMClass> hwSetup(EEPROM,F_CPU);
+perpompa_p004::Store<EEPROMClass> settingsStore(EEPROM);
 double value_dbl;
 char value_str[16]; // dtostrf width is a minimum; displayed values can exceed four characters.
 char lcd_shown[2][LCD_COLUMNS+1];
@@ -231,8 +234,11 @@ void setup(){
  menu[11].lim = 0;
  menu[11].suffix = "";
 
+  int storedValues[perpompa_p004::kItems]={};
+  const perpompa_p004::ReadResult settingsState=settingsStore.load(storedValues);
   for (int i=0; i < 11; i++){
-      int saved_value = eepromReadInt(i*2);
+       int saved_value = settingsState == perpompa_p004::kLoaded ? storedValues[i] :
+         (settingsState == perpompa_p004::kMissing ? eepromReadInt(i*2) : -1);
       if (menu[i].type == ACTION){
         menu[i].value = 0;
       } else if (saved_value >= 0 && saved_value <= menu[i].lim){
@@ -411,9 +417,7 @@ if (in_action){
   break;
 
   case 8:
-   for (int i=0; i < 11; i++){
-      eepromWriteInt(i*2,menu[i].value);
-   }
+   if (!saveSettingsAtomic()){hwForceIdle();exit_action_menu();break;}
    delay(700);
    menu_left = true;
   break;
@@ -570,6 +574,12 @@ void set_rng_running(bool running){
 
 //_____________________________________________________________________________________________
 
+bool saveSettingsAtomic(){
+  int values[perpompa_p004::kItems];
+  for(uint8_t i=0;i<perpompa_p004::kItems;i++)values[i]=menu[i].value;
+  return settingsStore.save(values);
+}
+
 void usbApplyEvent(const perpompa_usb::Event &e){
   switch(e.kind){
     case perpompa_usb::kNone: return;
@@ -604,8 +614,14 @@ void usbApplyEvent(const perpompa_usb::Event &e){
       // Preserve legacy w persistence while rejecting invalid calibration.
       hwForceIdle();inChar=0;
       if(e.value[0]<=0 || e.value[0]>menu[7].lim)return;
-      cal=(int)e.value[0];menu[7].value=cal;
-      for(int i=0;i<11;i++)eepromWriteInt(i*2,menu[i].value);
+      {
+        const int oldMenuCal=menu[7].value,oldCal=cal;
+        cal=(int)e.value[0];menu[7].value=cal;
+        if(!saveSettingsAtomic()){
+          menu[7].value=oldMenuCal;cal=oldCal;
+          hwForceIdle();inChar=0;return;
+        }
+      }
       return;
   }
   hwForceIdle(); inChar=0;
@@ -839,18 +855,6 @@ boolean encoder_selection(int & x, int & y, int lim){ //main menu
   y = (x >= lim) ? 0 : x + 1;
   return true;
 }
-//_____________________________________________________________________________________________
-
-void eepromWriteInt(int adr, int wert) { 
-//http://shelvin.de/eine-integer-zahl-in-das-arduiono-eeprom-schreiben/
-byte low, high;
-
-  low=wert&0xFF;
-  high=(wert>>8)&0xFF;
-  EEPROM.write(adr, low); // dauert 3,3ms 
-  EEPROM.write(adr+1, high);
-  return;
-} //eepromWriteInt
 //_____________________________________________________________________________________________
 
 int eepromReadInt(int adr) { 
