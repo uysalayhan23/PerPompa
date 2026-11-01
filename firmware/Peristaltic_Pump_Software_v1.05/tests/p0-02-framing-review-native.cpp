@@ -1,62 +1,80 @@
+// P0-02 legacy quiet completion regression gate adapted for accepted P0-03 V2.
+// This tests parser/framing behavior, NOT physical STOP or all firmware paths.
 #include "p0-02-usb-parser.h"
 #include <stdint.h>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <string>
 using namespace perpompa_usb;
 static unsigned checks=0;
 static void ok(bool value,const char* name){
- if(!value){std::fprintf(stderr,"P002_FRAMING_FAIL: %s\n",name);std::exit(2);}++checks;
+ if(!value){std::fprintf(stderr,"P002_V2_FRAMING_FAIL: %s\n",name);std::exit(2);}++checks;
 }
-static Event feed(Parser &p,const char *s,uint32_t now){
+static std::string frame(const std::string& body){
+ uint16_t crc=p003v2::Parser::checksum(body.data(),body.size());
+ char cs[8];std::snprintf(cs,sizeof(cs),"|%04X\n",(unsigned)crc);
+ return body+cs;
+}
+static Event feed(Parser &p,const std::string &s,uint32_t now){
  Event last={kNone,{0,0,0}};
- for(const char* c=s;*c;c++){
-  Event e=p.feed(static_cast<uint8_t>(*c),now);
-  if(e.kind!=kNone)last=e;
- }
+ for(char c:s){Event e=p.feed(static_cast<uint8_t>(c),now);
+  if(e.kind!=kNone)last=e;}
  return last;
 }
 int main(){
- Parser pump;
- ok(feed(pump,"p1000 500",100).kind==kPending,"p prefix recognized pending");
- ok(pump.tick(139).kind==kNone,"39ms no premature pump");
- Event truncated=pump.tick(140);
- ok(truncated.kind==kPump,"40ms truncated but numeric-valid p accepted");
- ok(truncated.value[0]==1000,"truncated p rate");
- ok(truncated.value[1]==500,"truncated p cal 500 instead of intended 5000");
- Parser intended;
- ok(feed(intended,"p1000 5000",100).kind==kPending,"intended packet pending");
- Event full=intended.tick(140);
- ok(full.kind==kPump,"full undelimited p accepted");
- ok(full.value[1]==5000,"full p cal expected 5000");
- Parser dose;
- ok(feed(dose,"d10 1000 500",200).kind==kPending,"d prefix pending");
- Event partialDose=dose.tick(240);
- ok(partialDose.kind==kDose,"partial third d field also accepted");
- ok(partialDose.value[2]==500,"partial d calibration changed");
- Parser write;
- ok(feed(write,"w420",300).kind==kPending,"w prefix pending");
- Event partialWrite=write.tick(340);
- ok(partialWrite.kind==kWriteCalibration,"partial w valid write event");
- ok(partialWrite.value[0]==420,"partial w value not intended 4200");
- Parser delimited;
- ok(feed(delimited,"w4200\n",400).kind==kWriteCalibration,"newline terminated w unambiguous");
- ok(delimited.tick(500).kind==kNone,"no duplicate after terminated w");
+ Parser legacyP;
+ ok(feed(legacyP,"p1000 5000\n",100).kind==kReject,"legacy p rejected");
+ ok(legacyP.tick(140).kind==kNone,"legacy p cannot resurrect");
+ Parser legacyD;
+ ok(feed(legacyD,"d100 1000 5000\n",100).kind==kReject,"legacy d rejected");
+ Parser legacyW;
+ ok(feed(legacyW,"w4200\n",100).kind==kReject,"legacy w rejected");
+ Parser legacyC;
+ ok(legacyC.feed('c',100).kind==kReject,"CRC-less c rejected");
+
+ Parser p;std::string pc=frame("@2|p|1000|5000");
+ ok(feed(p,pc,200).kind==kPending,"CRC pump deferred until queue drain");
+ ok(p.tick(201).kind==kPump,"valid pump committed on drained tick");
+ ok(p.tick(202).kind==kNone,"pump not replayed");
+ Parser d;std::string dc=frame("@2|d|100|1000|5000");
+ ok(feed(d,dc,300).kind==kPending,"CRC dose deferred");
+ Event de=d.tick(301);
+ ok(de.kind==kDose&&de.value[0]==100&&de.value[2]==5000,"CRC dose values preserved");
+ Parser w;std::string wc=frame("@2|w|4200");
+ ok(feed(w,wc,400).kind==kPending,"CRC write deferred");
+ Event we=w.tick(401);
+ ok(we.kind==kWriteCalibration&&we.value[0]==4200,"CRC write value preserved");
+ Parser c;std::string cc=frame("@2|c");
+ ok(feed(c,cc,500).kind==kPending,"CRC calibration deferred");
+ ok(c.tick(501).kind==kCalibrate,"CRC calibration accepted at drain");
+
+ Parser tamper;std::string bad=wc;bad[5]='3';
+ ok(feed(tamper,bad,600).kind==kReject,"modified field without new CRC rejected");
+ ok(tamper.tick(641).kind==kNone,"rejected CRC cannot replay");
+ Parser truncated;
+ ok(feed(truncated,"@2|w|420",700).kind==kPending,"incomplete V2 pending");
+ ok(truncated.tick(739).kind==kNone,"39ms V2 incomplete not committed");
+ ok(truncated.tick(740).kind==kReject,"40ms V2 incomplete rejected");
  Parser stop;
- feed(stop,"p1000 500",500);
- ok(stop.feed('x',540).kind==kStop,"STOP before quiet tick wins when processed first");
- ok(stop.tick(540).kind==kNone,"stop cannot emit stale p");
- Parser incomplete;
- feed(incomplete,"p1000 ",600);
- ok(incomplete.tick(640).kind==kReject,"truly missing field rejected");
- Parser invalid;
- ok(feed(invalid,"w2147483648",700).kind==kReject,"overflow rejected");
- Parser cal;
- ok(cal.feed('c',800).kind==kCalibrate,"calibration command preserved");
+ ok(feed(stop,pc,800).kind==kPending,"pump held before x");
+ ok(stop.feed('x',801).kind==kStop,"x immediate STOP cancels held pump");
+ ok(stop.tick(801).kind==kNone,"x prevents stale pump delivery");
+ Parser extra;
+ ok(feed(extra,wc,900).kind==kPending,"write held before trailing bytes");
+ ok(extra.feed(' ',900).kind==kReject,"trailing data cancels held EEPROM write");
+ ok(extra.tick(900).kind==kNone,"canceled write cannot commit");
+ Parser overflowing;
+ ok(feed(overflowing,frame("@2|w|4200"),1000).kind==kPending,"held write before overbudget");
+ overflowing.reset(); // unchanged firmware's case 9 overflow branch
+ ok(overflowing.tick(1000).kind==kNone,"case9 overflow reset cancels write");
+ Parser badLength;
+ std::string tooLong="@2|w|"+std::string(49,'9');
+ ok(feed(badLength,tooLong,1100).kind==kReject,"48-byte limit fails closed");
  Parser wrap;
- feed(wrap,"w4200",UINT32_MAX-19U);
- ok(wrap.tick(19).kind==kNone,"millis wrap 39ms pending");
- ok(wrap.tick(20).kind==kWriteCalibration,"millis wrap 40ms completes");
- std::printf("P002_FRAMING_SOURCE_FCPU_%lu=%u/%u PASS; TRUNCATED_VALID_LAST_FIELD_RISK=REPRODUCED; PHYSICAL_STOP=NOT_RUN; RELEASE_BLOCKED\n",
-   (unsigned long)F_CPU,checks,checks);
+ ok(feed(wrap,"@2|w|4",UINT32_MAX-19U).kind==kPending,"wrap frame pending");
+ ok(wrap.tick(19).kind==kNone,"wrap at 39ms no event");
+ ok(wrap.tick(20).kind==kReject,"wrap at 40ms rejects");
+ std::printf("P002_V2_FRAMING_FCPU_%lu=%u/31 PASS; LEGACY_QUIET_COMPLETION=REJECTED; HOST_ONLY; PHYSICAL_NOT_RUN; RELEASE_BLOCKED\n",(unsigned long)F_CPU,checks);
+ if(checks!=31)return 2;
 }
