@@ -2,7 +2,7 @@
 #define PERPOMPA_P002_USB_PARSER_H
 // Isolated, bounded, nonblocking parser. No Arduino APIs, GPIO or EEPROM access.
 // p(rate,cal), d(volume,rate,cal), w(cal), c, x. Space/tab/CR/LF separate numbers.
-// Legacy packets can omit the final delimiter: a quiet gap closes the last token.
+// p/d/w require an explicit final delimiter; a 40 ms quiet gap rejects pending frames.
 // A pending/invalid command should STOP the active motor in the caller.
 #include <stdint.h>
 namespace perpompa_usb {
