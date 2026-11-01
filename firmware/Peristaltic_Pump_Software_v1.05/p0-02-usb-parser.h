@@ -57,7 +57,6 @@ class Parser {
       if(count_>=3){reset();return event(kReject);}
       value_[count_++]=current_;
     }
-    if(count_==required_)return complete();
     reset();return event(kReject);
   }
  private:
