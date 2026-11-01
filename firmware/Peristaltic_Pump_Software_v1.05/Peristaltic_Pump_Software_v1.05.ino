@@ -8,6 +8,7 @@
 #include "hw-setup-runtime.h"
 #include "p0-02-usb-parser.h"
 #include "p0-04-settings-store.h"
+#include "p004-migration-guard-candidate.h"
 bool saveSettingsAtomic();
 
 
@@ -111,6 +112,9 @@ boolean val_change =0;
 bool hwUiActive=false;
 perpompa_hw::SafeSetup<EEPROMClass> hwSetup(EEPROM,F_CPU);
 perpompa_p004::Store<EEPROMClass> settingsStore(EEPROM);
+p004_migration_candidate::Gate<EEPROMClass> migrationGate(EEPROM);
+p004_migration_candidate::BootKind migrationBoot=p004_migration_candidate::kLocked;
+bool migrationReviewAccepted=false;
 double value_dbl;
 char value_str[16]; // dtostrf width is a minimum; displayed values can exceed four characters.
 char lcd_shown[2][LCD_COLUMNS+1];
@@ -235,10 +239,10 @@ void setup(){
  menu[11].suffix = "";
 
   int storedValues[perpompa_p004::kItems]={};
-  const perpompa_p004::ReadResult settingsState=settingsStore.load(storedValues);
+  migrationBoot=migrationGate.boot(storedValues);
   for (int i=0; i < 11; i++){
-       int saved_value = settingsState == perpompa_p004::kLoaded ? storedValues[i] :
-         (settingsState == perpompa_p004::kMissing ? eepromReadInt(i*2) : -1);
+       int saved_value = migrationBoot == p004_migration_candidate::kNewReady ? storedValues[i] :
+          (migrationBoot == p004_migration_candidate::kLegacyNeedsReview ? eepromReadInt(i*2) : -1);
       if (menu[i].type == ACTION){
         menu[i].value = 0;
       } else if (saved_value >= 0 && saved_value <= menu[i].lim){
@@ -358,6 +362,11 @@ ClickEncoder::Button b = encoder->getButton();
           }
         break;
       case ClickEncoder::Held:
+          // Explicit local HOLD after the legacy review prompt; USB w and remote never acknowledge migration.
+          if(!encoder_hold_handled && menu_number_1==8 && in_action &&
+             migrationBoot==p004_migration_candidate::kLegacyNeedsReview &&
+             !hwUiActive && !rng_running && !usb_start && !remote_started &&
+             remote_stable_state==HIGH && menu[7].value>0) migrationReviewAccepted=true;
           if (!encoder_hold_handled && in_menu && menu[menu_number_1].type == VALUE){
           menu[menu_number_1].value = 0;
           val_change=true;
@@ -417,6 +426,10 @@ if (in_action){
   break;
 
   case 8:
+   if(migrationBoot==p004_migration_candidate::kLegacyNeedsReview && !migrationReviewAccepted){
+     hwForceIdle();lcd.setCursor(0,0);lcd.print("VERIFY CAL SETS ");
+     lcd.setCursor(0,1);lcd.print("HOLD TO CONFIRM ");break;
+   }
    if (!saveSettingsAtomic()){hwForceIdle();exit_action_menu();break;}
    delay(700);
    menu_left = true;
@@ -575,12 +588,26 @@ void set_rng_running(bool running){
 //_____________________________________________________________________________________________
 
 bool saveSettingsAtomic(){
+  if(migrationBoot==p004_migration_candidate::kLocked ||
+     (migrationBoot==p004_migration_candidate::kLegacyNeedsReview && !migrationReviewAccepted))return false;
   int values[perpompa_p004::kItems];
-  for(uint8_t i=0;i<perpompa_p004::kItems;i++)values[i]=menu[i].value;
-  return settingsStore.save(values);
+  for(uint8_t i=0;i<perpompa_p004::kItems;i++){
+    if(menu[i].type!=ACTION && (menu[i].value<0 || menu[i].value>menu[i].lim))return false;
+    values[i]=menu[i].value;
+  }
+  if(values[7]<=0)return false;
+  const bool review=migrationBoot==p004_migration_candidate::kLegacyNeedsReview && migrationReviewAccepted;
+  if(!migrationGate.save(values,review))return false;
+  migrationBoot=migrationGate.boot(nullptr);
+  migrationReviewAccepted=false;
+  return migrationBoot==p004_migration_candidate::kNewReady;
 }
 
 void usbApplyEvent(const perpompa_usb::Event &e){
+  if(migrationBoot!=p004_migration_candidate::kNewReady &&
+     (e.kind==perpompa_usb::kPump || e.kind==perpompa_usb::kDose || e.kind==perpompa_usb::kCalibrate)){
+    hwForceIdle();inChar=0;return;
+  }
   switch(e.kind){
     case perpompa_usb::kNone: return;
     case perpompa_usb::kPending:
@@ -639,13 +666,14 @@ bool hwMotorAllowed(){
     path=remote_started ? static_cast<perpompa_hw::StartPath>(perpompa_hw::kRemoteDose+menu[6].value) :
       static_cast<perpompa_hw::StartPath>(perpompa_hw::kLocalDose+menu[6].value);
   }
-  return hwSetup.permit(path,false);
+  return migrationBoot==p004_migration_candidate::kNewReady && hwSetup.permit(path,false);
 }
 
 void remote_start(){
   // Keep menu edits and the Save/USB actions under local control.
   if (in_menu || in_action || hwUiActive) return;
-  if (menu[6].value < 0 || menu[6].value > 2 ||
+  if (migrationBoot!=p004_migration_candidate::kNewReady ||
+       menu[6].value < 0 || menu[6].value > 2 ||
       !hwSetup.permit(static_cast<perpompa_hw::StartPath>(perpompa_hw::kRemoteDose+menu[6].value),false))
       { hwForceIdle(); return; }
   menu_number_1 = 0;
@@ -749,6 +777,7 @@ void pump(int _delay_us) {
 //_____________________________________________________________________________________________
 
 void exit_action_menu(){
+   migrationReviewAccepted=false;
    usbParser.reset();
    usbDropUntilEmpty=false;
    set_rng_running(false);

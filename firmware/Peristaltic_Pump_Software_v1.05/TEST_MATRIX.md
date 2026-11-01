@@ -388,3 +388,16 @@ Sonraki en küçük adım: yeni main kaynakları üzerinde `node firmware/Perist
 **Yeni çift derleme kapısı hazır:** `tests/p0-02-warning-full-qa-v2.cjs` blob 3e40957d44c560e9c14e724e0b4fa98faad57479 ve `tests/p0-02-warning-one-shot-v2.cjs` blob ed71efefea91d0993a54ec31a98770599c9c3e22; eski SHA-kilitli 104-case gerçek `setup()/loop()` mock ve gerçek Arduino Pro Mini AVR 16/8MHz kaynak testlerini geçici warning adayında yeniden çalıştırır. Host C++ derleme bayraklarına `-Werror=string-compare`, `-Werror=switch` eklendi; arşiv SHA kapısı korundu. JS syntax ve gerçek GitHub kaynak karşılaştırması PASS. Fixture üretimi **43.905 karakter gerçek source gövdeli C++**, geçici firmware **28.995 karakter**, SHA ve arşiv önkontrolü PASS. Bilerek başarısız compiler ortamında `BLOCKED` verdi. **Yeni adayın gerçek tam host C++ testleri ve gerçek AVR iki derlemesi NOT_RUN** (bu ortamda Arduino CLI yok); aktif firmware'e henüz commit yapılmadı.
 
 **Sıradaki işlem:** Kullanıcının clang++ + Arduino CLI kurulu Windows ortamında, güncel main ZIP üzerinden `node firmware/Peristaltic_Pump_Software_v1.05/tests/p0-02-warning-one-shot-v2.cjs` çalıştır. Host/AVR iki frekansta gerçek PASS kanıtı geldikten sonra dört uyarı için en küçük kaynak aktarımı ve uzak SHA doğrulaması. Framing/STOP ve olası yeni açıkça sonlandırılmış USB protokolü bağımsız risk tasarımı olarak REVIEW kalır. Fiziksel HW_BENCH/HW_PUMP/USER_ACCEPTANCE NOT_RUN, endüstriyel G01-G10 ve RELEASE_BLOCKED devam eder. Yalnız main [skip ci], no Work/Codex/Actions/force-push.
+
+## P0-04 migration guard — geçici Windows gerçek kaynak kabulü (2026-11-02)
+
+| Kapı | Kaynak kanıtı | Durum |
+|---|---|---|
+| G0 Git kaynak bütünlüğü | `main b96dbaf10b889c56955f59a13f34d4c94a6b5f2a`, 6 Git blob, önkontrol | PASS |
+| G1 EEPROM migration native | 8MHz 302/302; 16MHz 302/302; 49 ilk geçiş/31 tekrar kayıt kesinti noktası | HOST_CPP PASS; HW NOT_RUN |
+| G2 SHA-kilitli gerçek kaynak dispatch | 7/7 çıkarma; 8/16MHz yerel/uzak/USB fail-closed; 2/2 | HOST_CPP PASS |
+| G3 AVR Pro Mini | `arduino:avr:pro:cpu=16MHzatmega328` 23218/30720 flash, 1097/2048 RAM; `8MHzatmega328` 23214/30720 flash, 1097/2048 RAM | AVR_COMPILE 2/2 PASS |
+| G4 Aday eşdeğerliği | Firmware SHA-256 `b5413f8f978de320d440223d5230201b940165f907ca23877ddeabe9554ba5f9`, witness başlık SHA-256 `0a779c7880afcc3f93f3cb80e0b68343fd6f6fe00c59c14b77a3e6aa47d82c7a` | Kaynak kilidi PASS |
+| G5 Fiziksel/uygunluk | Gerçek EEPROM güç kesintisi, fiziksel başlangıç/STOP, kalibrasyon ve downgrade | PHYSICAL_NOT_RUN / RELEASE_BLOCKED |
+
+**Sınırlar:** Windows host testinde seçilen gerçek yedi kaynak fonksiyonunun GPIO/seri/EEPROM mock koşusu, tam firmware'in fiziksel kabulü değildir. Migrasyon HOLD onayı fiziksel kalibrasyon kanıtı değildir. Tam EEPROM silinmesi `REVIEW_REQUIRED`; eski firmware'in stale 0–21 adreslerini okuması riski vardır. Önceki P0-02/P0-03/P0-04 kabul edilmiş native/AVR testleri tekrar koşturulmadı; ayrı kanıt olarak korunur. GitHub Actions/Work/Codex/force-push kullanılmaz.
