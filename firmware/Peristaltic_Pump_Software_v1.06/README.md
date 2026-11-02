@@ -23,3 +23,15 @@ Standalone test: g++ -std=c++11 -Wall -Wextra -Werror -pedantic -fsanitize=undef
 See HARDWARE.md and MODBUS_REGISTER_MAP.md.
 
 Latest scoped test: 101/101 host checks with g++ and clang++ at F_CPU=8/16MHz (F_CPU is only a build macro; NOT an AVR compile). Firmware integration NOT_RUN.
+
+## v1.06 Modbus Settings — first isolated implementation (2026-11-02)
+
+The extra **Modbus Settings** main-menu page has an independently testable C++11 UI/state model, but is **not yet wired into the v1.06 Arduino sketch, I²C LCD or live UART**.
+
+- `modbus_settings.h`: local encoder menu model: Baud Rate, Node Address, Parity, Stop Bits, Save + Apply (local HOLD confirmation), Back. Defaults **9600 / address 1 / EVEN / 1 stop**.
+- EEPROM slots 192–207 and 224–239 store CRC16/CCITT-FALSE-verified, generation-checked, commit-last settings. Erased records display defaults; corrupt/conflicting records need local review and must not grant remote motor permission.
+- `tests/modbus_settings_native.cpp`: original header compiled with actual **g++/clang++**, F_CPU=8/16MHz source macro, UBSan; **126/126 checks × 4 PASS**; interrupted writes and invalid settings included. F_CPU flags in host compilation do **NOT** prove AVR binary correctness.
+- `manuals/ENGINEERING_MANUAL.md`: interface pin assignment, serial framing, EEPROM layout, proposed register map, safety locks and acceptance gates.
+- `manuals/USER_MANUAL.md`: planned operator UI and default settings.
+
+**Unfinished:** v1.06 integrated firmware, visible I²C 16×2 LCD, CRC/RTU UART dispatch, PLC tests, real AVR 8/16MHz builds and hardware tests: **NOT_RUN**. Do not flash these pure modules as firmware. v1.05 is unaffected; industrial RELEASE_BLOCKED.
