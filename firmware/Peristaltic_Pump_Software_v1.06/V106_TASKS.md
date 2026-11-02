@@ -18,7 +18,7 @@ Kullanıcı v1.05'in **tüm ilgili kaynakları, header, test, QA, doküman, mani
 |---|---|---|---|
 | 01 | V106-01 | Saf Modbus RTU alıcı, CRC ve zamanlama | HOST_CPP önceki 101/101 x4; AVR NOT_RUN |
 | 02 | V106-02 | Baud/Node/Parity/Stop menü modeli, EEPROM | HOST_CPP önceki 126/126 x4; AVR NOT_RUN |
-| 03 | V106-03 | 16x2 LCD köprü adaptörü, ClickEncoder olayları, idle güvenliği | HOST_CPP 622/622 x4; fiziksel LCD NOT_RUN |
+| 03 | V106-03 | 16x2 LCD köprü, gerçek hd44780_I2Cexp/ClickEncoder API adaptörü, idle güvenliği | HOST_CPP: köprü 622/622 x4 ve yeni adaptör 533/533 x4 PASS; 4/4 negatif mutant; gerçek I2C ve AVR NOT_RUN |
 | 04 | V106-04 | Geçerli v1.05 motor ve P0-04 güvenliklerini v1.06 ana firmware'e aktarma | NOT_RUN; paralel otomasyon korunsun |
 | 05 | V106-05 | Gerçek PCF8574 I²C LCD ve enkoder menü entegrasyonu | NOT_RUN |
 | 06 | V106-06 | UART RS485 DE/RE ve MODBUS RTU RX zamanlaması, STEP bloklaması, bootloader | NOT_RUN |
