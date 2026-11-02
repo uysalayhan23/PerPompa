@@ -35,3 +35,9 @@ The extra **Modbus Settings** main-menu page has an independently testable C++11
 - `manuals/USER_MANUAL.md`: planned operator UI and default settings.
 
 **Unfinished:** v1.06 integrated firmware, visible I²C 16×2 LCD, CRC/RTU UART dispatch, PLC tests, real AVR 8/16MHz builds and hardware tests: **NOT_RUN**. Do not flash these pure modules as firmware. v1.05 is unaffected; industrial RELEASE_BLOCKED.
+
+## User Manual, Engineering Manual, and v1.05 archival decision (2026-11-02)
+
+Existing Turkish guide `docs/Peristaltik_Pompa_Kullanici_Kilavuzu_v1.04.pdf` is preserved; a **Modbus-only addendum** is drafted at `docs/Peristaltik_Pompa_Modbus_Eki_v1.06.md`. An extra v1.06 User Manual is not needed. Engineering Manual will be written **last**, after integrated firmware/register/PLC/hardware acceptance; earlier preliminary manual previews were removed to avoid misrepresenting the draft as a finished product.
+
+See `V106_TASKS.md`. User also requests **archiving the entire v1.05 folder and all related files** when v1.06 safely takes over. Do **not** move the current v1.05 source path while the P0-04 automation depends on it, or before explicit policy/automation transition and necessary acceptance gates. v1.04 archive remains unchanged.
