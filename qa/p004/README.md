@@ -39,3 +39,10 @@ Bir kez çalıştırılan GitHub Actions workflow'ları aktif `.github/workflows
 - `flash_fullsource_native_qa.tar.gz`: kaynak test paketi. SHA256 `2326f2bff168a6a165f93bafcb393ab91d333d38fb8dff7d2affaf36ec2cd539`. Tam özgün `setup()/loop()` gövdeleri ve host donanım taklitleriyle 12 yeni senaryo, GCC/Clang × 8/16 MHz = **48/48 UBSan PASS** ve **48/48 ASan+UBSan PASS**. Beş kasıtlı LCD metin mutantı ×4 = **20/20 yakalandı**, her iki sanitizer kombinasyonunda.
 - `run_flash_fullsource_native_review.sh`: kök dizinden tek komutla çalıştırılabilir; SHA kontrolü, geçici kopyada F() patch uygulama ve yeni QA. `AVR` üzerinde veya fiziksel kartta çalıştırmaz; üretim firmware'ini değiştirmez.
 - [Tam kapsam, stack/heap açık kapılar ve SHA kanıtı](../../firmware/Peristaltic_Pump_Software_v1.06/P004_FLASH_FULLSOURCE_NATIVE_REVIEW_20261103.md). Önceki 110 B SRAM kazanımı / AVR 2/2 başarı korunur. **Tüm yollar stack zirvesi REVIEW; PHYSICAL_NOT_RUN; RELEASE_BLOCKED.**
+
+## 2026-11-03 — EEPROM/Timer/UART stack streaming adayı (reddedilen optimizasyon)
+
+- Tek geçişli EEPROM çözücü aday header: `p0-04-store-stream-qa.h`. `qa/p004/stack_store_uart_probe.c` salt AVR simülasyon aracıdır.
+- Native/parite/negatif mutant kanıtı ve AVR 16/8MHz gerçek derleme sonuçları: [P004 EEPROM ISR stack raporu](../../firmware/Peristaltic_Pump_Software_v1.06/P004_EEPROM_ISR_STACK_REVIEW_20261103.md).
+- Sınırlı simAVR testinde EEPROM kayıt ve UART RX sırasında statik SRAM **1326 B değişmedi**, en dar gözlenen stack–heap boşluğu **200→201 B**. Ayrı tanı derlemesinin 44→10 B yerel çerçeve farkı optimize firmware en kötü-yol kazancı değildir.
+- **Karar:** Kazanç yalnız 1 B olduğu için üretime aktarılmayacak. Geçici Actions workflow'u kaldırıldı; saatlik otomasyon ve firmware korunur. `PHYSICAL_NOT_RUN`, `RELEASE_BLOCKED`.
