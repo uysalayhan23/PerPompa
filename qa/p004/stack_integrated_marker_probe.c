@@ -87,6 +87,7 @@ int main(int argc, char **argv) {
   int state=0, lcd_seen=0, heap_seen=0, hw_seen=0, stimulus=0;
   int ee_stage=0, ee_witness=0, ee_commit=0, uart_bytes=0;
   uint64_t next_uart_cycle=0;
+  uint32_t eeprom_marker_snapshots=0;
   const uint64_t limit=70000000;
   for (steps=0; steps<limit; steps++) {
     state=avr_run(avr);
@@ -133,7 +134,11 @@ int main(int argc, char **argv) {
       }
       stimulus=1;
     }
-    if (ee_stage && (steps&8191)==0) {
+    /* EEPROM.update() is emulated much faster than physical programming.
+       Sample while the synthetic local save is active, before the slot marker
+       returns to A5. Stop dense polling after the initial QA transition. */
+    if (ee_stage && !ee_commit && avr->cycle < 14000000 && (steps&63)==0) {
+      eeprom_marker_snapshots++;
       avr_eeprom_desc_t ee_get={.ee=NULL,.offset=0,.size=1024};
       avr_ioctl(avr, AVR_IOCTL_EEPROM_GET, &ee_get);
       if (ee_get.ee && ee_get.size>164) {
@@ -143,7 +148,7 @@ int main(int argc, char **argv) {
            later recovery witness 144 which can be too near final commit. */
         if (ee_stage==1 && ee_get.ee[109]==0) {
           ee_stage=2;marker_seen=1;marker_open_cycle=avr->cycle;
-          next_uart_cycle=avr->cycle+1000;
+          next_uart_cycle=avr->cycle+1;
         }
         if (ee_get.ee[109]==0xa5 && !ee_commit) {
           ee_commit=1;marker_commit_cycle=avr->cycle;
@@ -179,6 +184,7 @@ int main(int argc, char **argv) {
   printf("SIMAVR_LCD_INIT_OBSERVED=%d\nSIMAVR_I2C_WRITES=%" PRIu64 "\nSIMAVR_I2C_READS=%" PRIu64 "\n",lcd_seen,pcf.rx,pcf.tx);
   printf("SIMAVR_CPU_STATE=%d\nSIMAVR_INPUT_STIMULUS_STAGES=%d\nSIMAVR_HW_UI_OBSERVED=%d\n",state,stimulus,hw_seen);
   printf("SIMAVR_EEPROM_SAVE_STAGED=%d\nSIMAVR_EEPROM_WITNESS_OBSERVED=%d\nSIMAVR_EEPROM_COMMITTED=%d\nSIMAVR_UART_RX_STIMULI=%d\n",ee_stage,ee_witness,ee_commit,uart_bytes);
+  printf("EE_MARKER_POLL_COUNT=%" PRIu32 "\n",eeprom_marker_snapshots);
   printf("MARKER_ZERO_SEEN=%u\nMARKER_OPEN_CYCLE=%" PRIu64 "\nMARKER_COMMIT_CYCLE=%" PRIu64
          "\nFIRST_UART_ISR_DURING_CYCLE=%" PRIu64 "\nFIRST_TIMER_ISR_DURING_CYCLE=%" PRIu64 "\n",
          marker_seen,marker_open_cycle,marker_commit_cycle,first_uart_during_cycle,first_timer_during_cycle);

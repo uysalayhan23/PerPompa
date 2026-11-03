@@ -1,4 +1,4 @@
-name: P0-04 one-shot early-marker EEPROM UART Timer ISR QA
+name: P0-04 one-shot dense-marker EEPROM UART Timer ISR QA
 on:
   issues:
     types: [opened]
@@ -9,7 +9,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   combined-coverage:
-    if: ${{ github.event.issue.user.login == 'uysalayhan23' && github.event.issue.title == 'P004-INTEGRATED-MARKER-ISR-20261103' }}
+    if: ${{ github.event.issue.user.login == 'uysalayhan23' && github.event.issue.title == 'P004-INTEGRATED-DENSE-MARKER-20261103' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
