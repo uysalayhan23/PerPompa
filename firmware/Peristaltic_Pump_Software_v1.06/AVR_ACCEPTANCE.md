@@ -15,3 +15,18 @@
 **Bağımlılıklar:** Arduino CLI 1.5.2-rc.1; arduino:avr 1.8.8; hd44780 1.3.2; TimerOne 1.1.1; ClickEncoder. Derlemede LCD için `Wire` kullanılır.
 
 **HOLD:** Gerçek I²C LCD pin eşlemesi, kontrast, açılış ve menü, USB/Remote/STEP ve EEPROM davranışı fiziksel cihazda doğrulanmadı. AVR derlemesi başarıyla tamamlandı, ancak bu güvenlik/ürün kabulü değildir. `PHYSICAL_NOT_RUN` / `RELEASE_BLOCKED`.
+
+## 2026-11-03: LCD başlatma hatasında fail-closed düzeltmesi
+
+**Kanıt kaynağı:** Kullanıcının Windows PowerShell üzerinden paylaştığı `Run-AVR-Preflight.ps1` gerçek Arduino CLI çıktısı.
+
+- Önceki v1.06 kaynak Git blob: `7933e4fe697a8778603ba553eb620e7788dc5ede`
+- Yeni AVR ölçümüyle birebir eşleşen kaynak blob: `55b19a8b1017bf1924dc568439f920ec9c90064f`
+- `PATCH=THREE_LCD_ONLY_EDITS; INVERSE_DIFF=ZERO; NO_MODBUS_RS485=PASS`
+- 16MHz AVR: Flash **27540 / 30720** bayt; statik SRAM **1368 / 2048**, boş **680** bayt — **PASS**
+- 8MHz AVR: Flash **27536 / 30720** bayt; statik SRAM **1368 / 2048**, boş **680** bayt — **PASS**
+- `NEW_LCD_FAILCLOSED_AVR=2/2`, çıkış kodu `0`
+
+LCD'nin `begin()` çağrısı hata döndürürse açılış kodu motor çıkışlarını pasifleştirir; ana döngüde START/USB/Remote kontrolüne girilmeden motor pasif tutulur. Bu davranışın kaynak testi AVR derleme PASS değildir; motorun fiziksel olarak emniyetli duruma geçtiği **henüz ölçülmedi**. Fiziksel I²C veri yolu takılması, besleme ve gerçek EEPROM geçişi ayrıca inceleme gerektirir.
+
+`PHYSICAL_NOT_RUN`, `SRAM_STACK_NOT_RUN`, `EEPROM_P004_REVIEW`, `RELEASE_BLOCKED` korunur.

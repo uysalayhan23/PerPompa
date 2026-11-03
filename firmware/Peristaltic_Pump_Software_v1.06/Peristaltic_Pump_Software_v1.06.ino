@@ -19,6 +19,7 @@ bool saveSettingsAtomic();
 #define LCD_ROWS 2
 // I2C LCD: SDA=A4 / SCL=A5; hd44780_I2Cexp auto-discovers PCF8574 backpack.
 hd44780_I2Cexp lcd;
+bool lcd_init_ok = false;
 
 //ENCODER --------------------------------------------------------------------------------
 #define ENCODER_PIN_BUTTON 2
@@ -263,7 +264,8 @@ void setup(){
   Serial.begin(BAUD);
   inputString.reserve(200);
   // set up the LCD's number of columns and rows:
-  lcd.begin(LCD_COLUMNS, LCD_ROWS);
+  lcd_init_ok = (lcd.begin(LCD_COLUMNS, LCD_ROWS) == 0);
+  if (!lcd_init_ok) { hwForceIdle(); return; }
   // Print a message to the LCD.
   menu[1].suffix = menu[2].options[menu[2].value];
   if (strcmp(menu[1].suffix,"uL")==0){
@@ -289,6 +291,7 @@ void setup(){
 //███ LOOP ████████████████████████████████████████████████████████████████████████████████████████████████████
 
 void loop() {
+  if (!lcd_init_ok) { hwForceIdle(); return; }
   
 // BUTTON HANDLING ////////////////////////////////////////////////////////////////////////////////
 
