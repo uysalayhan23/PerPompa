@@ -28,3 +28,14 @@ GitHub kaynak ve aday içeriği bağımsız karşılaştırıldı: **tam iki kul
 Yalnız tutucu 17/48 ilk kayıt kurtarma adayı değerlendirilebilir; 31/48 servis kilidi korunur. Eski 48/48 kurtarma adayı **GÜVENSİZ / YASAK**. Kurtarma sırasında 161 kesinti, GCC ve Clang ayrı ayrı 315371/315371 native kontrol PASS; yeni `setup()/loop()` UI entegrasyonu ve gerçek AVR **NOT_RUN**. Onaysız kayıt silme veya motor izinlerini gevşetme yapılmayacak.
 
 **Kilitler:** `main` yalnız, `[skip ci]`, 50 Actions çalışma izni mevcut fakat bu tur kullanılmadı; v1.05, v1.04, P0-04 otomasyonu ve Modbus'suz I²C-only kapsam korunur. `RELEASE_BLOCKED`.
+
+## 2026-11-03 — RAM-only tam v1.06 setup()/loop() native kabulü
+
+- Baz main HEAD `65e316071c1d293824cc85b3a0708adaa3262639`; özgün firmware Git blob `55b19a8b1017bf1924dc568439f920ec9c90064f`; aday firmware Git blob `957f963c1d4f59a04f18a896e9f6c92890061a49`.
+- Yalnız iki kullanılmayan String/inputString satırı boşaltıldı. LCD, motor, EEPROM, USB, Remote ve diğer özgün işlev gövdeleri değiştirilmedi.
+- Güncel SHA-kilitli özgün v1.06 .ino'nun gerçek setup()/loop() ve altı özgün header'ı Arduino/EEPROM/LCD/GPIO/Serial host mock ile derlendi: GCC + Clang, 8/16 MHz, baseline + RAM = 8/8 tam native koşu; her birinde 106/106 kontrol PASS, UBSan açık. 106 kontrolün içinde setup fixture/seed doğrulamaları da vardır.
+- Negatif LCD init fail-closed mutantı ve EEPROM-migration motor gate mutantı 2/2 beklenen FAIL (exit 2) ile yakalandı. Pozitif/negatif kapsam: Dose/Pump/Cal, STOP, Remote Hold/Pulse ve boot LOW, USB CRC16 V2 p/d/c/w/x ile bozuk/eksik/taşan frame, EEPROM inhibit/CRC/tanık kilidi, encoder/LCD UI.
+- Native kaynak/kanıt paketi: `PerPompa_v106_RAM_Only_TamNative_Kanit_20261103.zip` SHA256 `c8648a9885a466eeba6ffa89a8ff0487afe91b9a6b3566892631c27090621ba0`. Bu paket main'e eklenmedi; yalnız firmware ve QA durum kaydı teslim edildi.
+- Kullanıcının aynı aday Git blobunda daha önce gerçek Arduino CLI AVR 16/8MHz 2/2 PASS ölçümü (26760/26756 flash, 1362 statik SRAM) korundu; bu tur tekrar çalıştırılmadı.
+- Güncel kaynak test durumu: `FULL_SETUP_LOOP_HOST_CPP=8/8 PASS` (106/106 her koşu), `NEGATIVE_MUTANTS=2/2 DETECTED`, `AVR_8_16=HISTORICAL_2/2_PASS`. Önceki FULL_LOOP_NOT_RUN satırları tarihsel durumdur.
+- `HW_BENCH_NOT_RUN`, `HW_PUMP_NOT_RUN`, `STACK_PEAK_NOT_RUN`, `PHYSICAL_NOT_RUN`, `RELEASE_BLOCKED` korunur. P0-04 EEPROM recovery 17/48 REVIEW-only, 31/48 SERVICE_HOLD; eski güvensiz 48/48 YASAK. v1.04/v1.05, P0-04 otomasyonu ve Modbus'suz kapsam korunur.

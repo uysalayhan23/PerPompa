@@ -75,7 +75,7 @@ const int CALIBR_DECIMAL_CORR = pow(10,CALIBR_DECIMALS);
 
 //SERIAL COMMUNICATION ---------------------------------------------------------------------
 #define BAUD 9600
-String inputString = "";         // a String to hold incoming data
+
 boolean stringComplete = false;  // whether the string is complete
 long vol_uL=0;
 long rate_uL_min =0;
@@ -262,7 +262,7 @@ void setup(){
   encoder_button_event_ms = millis();
   
   Serial.begin(BAUD);
-  inputString.reserve(200);
+
   // set up the LCD's number of columns and rows:
   lcd_init_ok = (lcd.begin(LCD_COLUMNS, LCD_ROWS) == 0);
   if (!lcd_init_ok) { hwForceIdle(); return; }
