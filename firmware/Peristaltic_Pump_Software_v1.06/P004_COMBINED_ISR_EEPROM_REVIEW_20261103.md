@@ -1,5 +1,7 @@
 # PerPompa P0-04 — EEPROM / UART RX / Timer1 gerçek kesme çakışması QA
 
+> **Sonraki QA ölçümü (2026-11-03):** [Yoğun marker doğrulaması](P004_DENSE_MARKER_ISR_REVIEW_20261103.md), 8/16 MHz pozitif ve Remote LOW koşularının dördünü de yürüttü. Remote LOW 2/2 PASS; pozitif birleşik UART ISR testleri 2/2 REVIEW. Daha sık EEPROM örneklemesine rağmen simüle marker→commit penceresinde UART ISR 0 kaldı. Tarihsel bu belgenin FAIL/NOT_RUN statüleri olduğu gibi korunur.
+
 **Tarih:** 2026-11-03 · **Karar:** `COMBINED_ISR_EEPROM_REVIEW` · `ALL_PATHS_STACK_REVIEW` · `PHYSICAL_NOT_RUN` · `RELEASE_BLOCKED`.
 
 ## Kaynak kapsamı ve korumalar
