@@ -44,6 +44,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          avrb=$(find "$HOME/.arduino15/packages/arduino/tools" -type f -name avr-size -print -quit)
+          test -x "$avrb"
+          export PATH="$(dirname "$avrb"):$PATH"
+          avr-size --version | head -n 1
           sketch="$RUNNER_TEMP/p004/sketch/Peristaltic_Pump_Software_v1.06"
           report="$RUNNER_TEMP/p004/report"
           mkdir -p "$report"
