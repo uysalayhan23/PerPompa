@@ -66,8 +66,20 @@ jobs:
             avr-nm -n -C "$elf" > "$report/symbols-$name.txt"
             find "$build" -type f -name '*.su' -exec cat {} + > "$report/stack-frames-$name.txt"
             lines=$(wc -l < "$report/stack-frames-$name.txt")
-            echo "STACK_FRAMES_$name=$lines" | tee -a "$report/RESULT.txt"
-            test "$lines" -gt 0
+            echo "LTO_STACK_FRAMES_$name=$lines" | tee -a "$report/RESULT.txt"
+            if [[ "$lines" -eq 0 ]]; then
+              diag="$RUNNER_TEMP/p004/diagnostic-$name"
+              if arduino-cli compile --fqbn "$fqbn" --build-path "$diag" \
+                  --build-property "compiler.cpp.extra_flags=-fno-lto -fstack-usage" \
+                  --build-property "compiler.c.extra_flags=-fno-lto -fstack-usage" \
+                  "$sketch" > "$report/diagnostic-$name.log" 2>&1; then
+                find "$diag" -type f -name '*.su' -exec cat {} + > "$report/diagnostic-stack-frames-$name.txt"
+                dlines=$(wc -l < "$report/diagnostic-stack-frames-$name.txt")
+                echo "DIAGNOSTIC_NO_LTO_FRAMES_$name=$dlines" | tee -a "$report/RESULT.txt"
+              else
+                echo "DIAGNOSTIC_NO_LTO_FRAMES_$name=REVIEW_BUILD_FAILED" | tee -a "$report/RESULT.txt"
+              fi
+            fi
             getaddr() {
               awk -v wanted="$2" '$3==wanted { v=$1; sub(/^0080/, "", v); print v; exit }' "$1"
             }
