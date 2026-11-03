@@ -1,0 +1,52 @@
+name: P0-04 one-shot EEPROM streaming AVR stack A/B
+on:
+  issues:
+    types: [opened]
+permissions:
+  contents: read
+concurrency:
+  group: p004-store-stream-avr-review
+  cancel-in-progress: false
+jobs:
+  bounded-qa:
+    if: ${{ github.event.issue.user.login == 'uysalayhan23' && github.event.issue.title == 'P004-EEPROM-STREAM-AVR-20261103' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: arduino/setup-arduino-cli@v2
+      - name: Install only AVR QA dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          arduino-cli core update-index
+          arduino-cli core install arduino:avr@1.8.8
+          if ! arduino-cli lib install hd44780 TimerOne; then
+            sleep 5
+            arduino-cli lib install hd44780 TimerOne
+          fi
+          mkdir -p "$HOME/Arduino/libraries"
+          git clone --quiet --depth 1 --branch arduino https://github.com/0xPIT/encoder.git "$HOME/Arduino/libraries/ClickEncoder"
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq simavr libsimavr-dev libelf-dev
+          mkdir -p "$RUNNER_TEMP/p004-store"
+          gcc -std=c11 -O2 -Wall -Wextra -I/usr/include/simavr qa/p004/stack_store_uart_probe.c -o "$RUNNER_TEMP/p004-store/stack_store_uart_probe" -lsimavr -lelf
+          bin=$(find "$HOME/.arduino15/packages/arduino/tools" -type f -name avr-size -print -quit)
+          test -x "$bin"
+          echo "$(dirname "$bin")" >> "$GITHUB_PATH"
+      - name: Build original and streamlined EEPROM decoder on two AVR targets
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo 'dd3f1c9230a920af21c3bae3abd7eec16343ed23f191c37ac10b21a3c0f3f505  qa/p004/run_avr_eeprom_stream_ab.sh.gz' | sha256sum -c -
+          gzip -dc qa/p004/run_avr_eeprom_stream_ab.sh.gz | bash
+      - name: Preserve read-only AVR and emulator outputs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: p004-store-stream-${{ github.run_id }}
+          path: ${{ runner.temp }}/p004-store/report/
+          if-no-files-found: warn
+          retention-days: 3
