@@ -1,5 +1,7 @@
 # PerPompa P0-04 — simAVR EEPROM zamanlama modeli kabul kapısı
 
+> **2026-11-03 sonraki QA karşılaştırması:** Orijinal upstream simAVR v1.6 anlık-yazma modelinin uygunsuz olduğu tespiti değişmez. Yalnız izole QA kopyasına 3400µs gecikmiş EEPROM commit/EEPE busy yaması uygulandı ve gerçek v1.06 QA AVR ELF ile sınırlı [4/4 nominal ISR iz testi](P004_NOMINAL_EEPE_ISR_QA_20261103.md) PASS oldu. Bu sonucu fiziksel EEPROM kalibrasyonu, bütün ISR yolları veya endüstriyel release PASS olarak yorumlama; kilitler korunur.
+
 **Tarih:** 2026-11-03 · **Karar:** `SIMAVR_EEPROM_TIMING_MODEL_UNSUITABLE` · `COMBINED_ISR_REVIEW` · `PHYSICAL_NOT_RUN` · `RELEASE_BLOCKED`.
 
 ## Tespit — fiziksel ATmega328P ile simAVR 1.6 farkı
