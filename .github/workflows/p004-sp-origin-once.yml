@@ -1,0 +1,51 @@
+name: P0-04 one-shot optimized AVR stack PC attribution
+on:
+  issues:
+    types: [opened]
+permissions:
+  contents: read
+concurrency:
+  group: p004-sp-origin-qa-once
+  cancel-in-progress: false
+jobs:
+  stack-sp-origin-review:
+    if: ${{ github.event.issue.user.login == 'uysalayhan23' && github.event.issue.title == 'P004-SP-PC-ORIGIN-REVIEW-20261103' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Read-only checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Official Arduino CLI
+        uses: arduino/setup-arduino-cli@v2
+      - name: Install compiler and bounded simulator
+        shell: bash
+        run: |
+          set -euo pipefail
+          arduino-cli core update-index
+          arduino-cli core install arduino:avr@1.8.8
+          if ! arduino-cli lib install hd44780 TimerOne; then
+            sleep 5
+            arduino-cli lib install hd44780 TimerOne
+          fi
+          mkdir -p "$HOME/Arduino/libraries"
+          git clone --quiet --depth 1 --branch arduino https://github.com/0xPIT/encoder.git "$HOME/Arduino/libraries/ClickEncoder"
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq simavr libsimavr-dev libelf-dev
+          mkdir -p "$RUNNER_TEMP/p004-origin"
+          gcc -std=c11 -O2 -Wall -Wextra -I/usr/include/simavr qa/p004/stack_origin_probe.c -o "$RUNNER_TEMP/p004-origin/stack_origin_probe" -lsimavr -lelf
+          bin=$(find "$HOME/.arduino15/packages/arduino/tools" -type f -name avr-size -print -quit)
+          test -x "$bin"
+          echo "$(dirname "$bin")" >> "$GITHUB_PATH"
+      - name: SHA-locked original optimized 16 and 8 MHz AVR stack origin
+        shell: bash
+        run: bash qa/p004/run_sp_pc_origin_avr.sh
+      - name: Preserve QA provenance and symbol-mapped stack trace
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: p004-sp-pc-origin-${{ github.run_id }}
+          path: ${{ runner.temp }}/p004-origin/report/
+          if-no-files-found: warn
+          retention-days: 3
