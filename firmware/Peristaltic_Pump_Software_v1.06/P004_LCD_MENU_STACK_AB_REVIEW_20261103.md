@@ -1,5 +1,8 @@
 # PerPompa P0-04 — LCD menü stack A/B incelemesi (2026-11-03)
 
+
+> **ÖLÇÜM DÜZELTMESİ — 2026-11-03 (sonraki doğrulama):** 205→196 B ham SP farkı, tamamlanmış SP'ye göre gerçek 9 B stack regresyonu olarak kanıtlanmış değildir. SPH/SPL ara örnekleme kusuru doğrulandı. `DO_NOT_PROMOTE` kararı, optimize tüm-yol faydası kanıtlanmadığı için korunur; kodun gerçekten 9 B kötüleştiği söylenemez. Kaynak ve kanıt: [P004_SP_ATOMIC_MEASUREMENT_CORRECTION_20261103.md](P004_SP_ATOMIC_MEASUREMENT_CORRECTION_20261103.md). Önceki ham sonuçlar tarihsel kanıt olarak korunur; `PHYSICAL_NOT_RUN`, `RELEASE_BLOCKED` değişmez.
+
 **Sonuç: `QA_REGRESSION_FOUND` · `DO_NOT_PROMOTE` · `STACK_ALL_PATHS_REVIEW` · `PHYSICAL_NOT_RUN` · `RELEASE_BLOCKED`.**
 
 ## Kaynak ve minimal aday

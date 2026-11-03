@@ -1,5 +1,8 @@
 # PerPompa P0-04 — LCD sabit metinleriyle SRAM azaltma A/B kabulü (2026-11-03)
 
+
+> **ÖLÇÜM DÜZELTMESİ — 2026-11-03 (sonraki doğrulama):** 110 B **statik SRAM kazancı** ve AVR 8/16 MHz PASS geçerlidir. Ancak önceki 95→205 B ham SP farkı, gerçek stack/heap A/B kazancı değildir: 205 B gözlemi yarım SPH/SPL yazımından etkilenmiştir. Flash-LCD QA adayında tamamlanmış SP açıklığı 16 MHz 383 B, 8 MHz 377 B; baseline aynı yöntemle ayrıca yeniden ölçülmedi. Kaynak ve kanıt: [P004_SP_ATOMIC_MEASUREMENT_CORRECTION_20261103.md](P004_SP_ATOMIC_MEASUREMENT_CORRECTION_20261103.md). Önceki ham sonuçlar tarihsel kanıt olarak korunur; `PHYSICAL_NOT_RUN`, `RELEASE_BLOCKED` değişmez.
+
 **Disposition: QA CANDIDATE PASS; PRODUCTION INTEGRATION HOLD.** Bu çalışma yalnız SHA-kilitli geçici MergedGates/EEPROM recovery adayı içindir, ana firmware için değildir.
 
 ## Somut kaynak kusuru / minimal iyileştirme

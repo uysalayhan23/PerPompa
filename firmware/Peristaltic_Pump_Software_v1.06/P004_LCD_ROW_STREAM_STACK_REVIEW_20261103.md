@@ -1,5 +1,8 @@
 # P0-04 — LCD iki satırdan tek satır tamponuna geçiş: AVR stack incelemesi
 
+
+> **ÖLÇÜM DÜZELTMESİ — 2026-11-03 (sonraki doğrulama):** 205→189 B ham SP farkı, tamamlanmış SP'ye göre gerçek 16 B stack regresyonu olarak kanıtlanmış değildir. SPH/SPL ara örnekleme kusuru doğrulandı. `DO_NOT_PROMOTE` kararı, optimize tüm-yol faydası kanıtlanmadığı için korunur; kodun gerçekten 16 B kötüleştiği söylenemez. Kaynak ve kanıt: [P004_SP_ATOMIC_MEASUREMENT_CORRECTION_20261103.md](P004_SP_ATOMIC_MEASUREMENT_CORRECTION_20261103.md). Önceki ham sonuçlar tarihsel kanıt olarak korunur; `PHYSICAL_NOT_RUN`, `RELEASE_BLOCKED` değişmez.
+
 **Tarih:** 2026-11-03 · **Karar:** `QA_REVIEW_FAIL` / `DO_NOT_PROMOTE` / `STACK_ALL_PATHS_REVIEW` / `PHYSICAL_NOT_RUN` / `RELEASE_BLOCKED`.
 
 ## Kapsam ve değişmeyen kaynaklar

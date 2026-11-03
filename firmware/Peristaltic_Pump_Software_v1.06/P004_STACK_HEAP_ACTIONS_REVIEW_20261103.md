@@ -1,5 +1,8 @@
 # PerPompa P0-04 — AVR stack / heap evidence (2026-11-03)
 
+
+> **ÖLÇÜM DÜZELTMESİ — 2026-11-03 (sonraki doğrulama):** Önceki 95/205 B ham SP örneklemesi iki baytlı AVR SPH/SPL güncellemesi arasındaki geçici değeri içerebilir. Flash-LCD adayı için 205 B'nin bu nedenle hatalı olduğu makine koduyla doğrulandı. Flash-LCD aynı SHA için tamamlanmış SP açıklığı 16 MHz 383 B, 8 MHz 377 B olarak **yalnız sınırlandırılmış simAVR izinde** ölçüldü. Eski 95 B baseline tamamlanmış-SP ile ayrıca yeniden ölçülmedi. Kaynak ve kanıt: [P004_SP_ATOMIC_MEASUREMENT_CORRECTION_20261103.md](P004_SP_ATOMIC_MEASUREMENT_CORRECTION_20261103.md). Önceki ham sonuçlar tarihsel kanıt olarak korunur; `PHYSICAL_NOT_RUN`, `RELEASE_BLOCKED` değişmez.
+
 **Software assessment: CONDITIONAL/HOLD. This report is not a physical peak stack acceptance.**
 `STACK_SIM_TRACE_PASS` · `TRUE_ALL_PATHS_STACK_PEAK=NOT_RUN` · `PHYSICAL_NOT_RUN` · `RELEASE_BLOCKED`.
 

@@ -1,5 +1,8 @@
 # P0-04 — Birleşik v1.06 kurtarma adayı ve stack/heap QA kaynakları
 
+
+> **P0-04 stack ölçümü düzeltmesi (2026-11-03):** Önceki 95/205, 200/201, 205/196 ve 205/189 B simAVR *ham SP* tabloları, SPH/SPL yazımları arasında geçici ölçümler içerebildiği için **gerçek stack tepe kabulü değildir**. Aynı Flash-LCD QA SHA için **SP yazımı tamamlandıktan sonra** en düşük SP 16 MHz `0x07C5`, 8 MHz `0x07BF`; gözlenen açıklık sırasıyla **383 B / 377 B** (sadece sınırlı simülasyon). [Tam doğrulama](../../firmware/Peristaltic_Pump_Software_v1.06/P004_SP_ATOMIC_MEASUREMENT_CORRECTION_20261103.md). Başarısız tampon optimizasyonları hâlâ `DO_NOT_PROMOTE`; üretim firmware'i değişmedi. `ALL_PATHS_ISR_STACK_REVIEW` / `PHYSICAL_NOT_RUN` / `RELEASE_BLOCKED`.
+
 **Durum: REVIEW ONLY · NOT FOR PRODUCTION · RELEASE_BLOCKED**
 
 Bu klasör, 3 Kasım 2026 tarihli P0-04 çalışmasının **üretim firmware'ine aktarılmamış** geçici kodunu ve simülasyon test aracını kaynaklarıyla saklar.

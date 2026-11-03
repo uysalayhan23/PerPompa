@@ -1,5 +1,8 @@
 # PerPompa P0-04 — EEPROM/UART/Timer birleşik stack QA (2026-11-03)
 
+
+> **ÖLÇÜM DÜZELTMESİ — 2026-11-03 (sonraki doğrulama):** 200→201 B ham stack boşluğu, güncellenmesi tamamlanmış SP'ye dayalı karşılaştırma değildir. 16 bit SPH/SPL geçici örnekleme kusuru saptandığından gerçek 1 B kazanç olarak kullanılmaz. `DO_NOT_PROMOTE` kararı **kanıtlı yarar ve tam güvenlik kabulü bulunmadığı** için değişmez. Kaynak ve kanıt: [P004_SP_ATOMIC_MEASUREMENT_CORRECTION_20261103.md](P004_SP_ATOMIC_MEASUREMENT_CORRECTION_20261103.md). Önceki ham sonuçlar tarihsel kanıt olarak korunur; `PHYSICAL_NOT_RUN`, `RELEASE_BLOCKED` değişmez.
+
 **Karar: EEPROM streaming optimizasyonu QA REVIEW / DO_NOT_PROMOTE.** Üretim .ino ve mevcut v1.06 firmware'i değiştirilmedi. Bu çalışma tam stack üst sınırını veya fiziksel güvenliği kanıtlamaz.
 
 ## Girdi ve tek QA değişikliği
