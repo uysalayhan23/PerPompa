@@ -69,3 +69,7 @@ Bir kez çalıştırılan GitHub Actions workflow'ları aktif `.github/workflows
 ## 2026-11-03 — simAVR EEPROM zamanlama modelinde fiziksel temsil kusuru
 
 `check_simavr_eeprom_timing.py` kaynak denetimiyle upstream simAVR v1.6 EEPROM modelinde verinin hemen değiştirildiği ve EEPE meşgul bitinin hemen temizlendiği görüldü; 3400 µs timer yalnız ready IRQ içindir. `--self-test` **5/5 sentetik QA kontrolü PASS**; kaynak kontrolü **asla fiziksel timing PASS üretmez**. Önceki 3335/3235 CPU çevrimlik marker→commit penceresi fiziksel AVR EEPROM yazma süresi değildir. [Kalıcı rapor](../../firmware/Peristaltic_Pump_Software_v1.06/P004_SIMAVR_EEPROM_TIMING_MODEL_REVIEW_20261103.md). **Birleşik ISR pozitif REVIEW**, Remote LOW simülasyon 2/2 PASS; `PHYSICAL_NOT_RUN`, `RELEASE_BLOCKED`. Bu araştırma için Actions açılmadı.
+
+## 2026-11-03 — Bağımsız EEPROM zamanlama referans modeli (QA 9/9 PASS)
+
+`p004_eeprom_timing_reference.py` ve `test_p004_eeprom_timing_reference.py`: ATmega328P tipik 3,4 ms/bayt EEPROM busy ve 4-çevrim EEMPE modelini **16/8 MHz** için pozitif/negatif kontrol eder. `python3 -m unittest -q test_p004_eeprom_timing_reference.py` ile yerelde **9/9 MODEL_QA PASS**, py_compile PASS. Model kendi IRQ olaylarını sentetik üretir; özgün ISR yürütümünü, gerçek motor STEP'i, stack peak'i veya fiziksel EEPROM güvenliğini doğrulamaz. [Kapsam, eksikler ve kabul planı](../../firmware/Peristaltic_Pump_Software_v1.06/P004_EEPROM_TIMING_REFERENCE_MODEL_20261103.md). Yeni Actions koşusu yapılmadı. `COMBINED_ISR_REVIEW`, `PHYSICAL_NOT_RUN`, `RELEASE_BLOCKED`.
