@@ -1,3 +1,5 @@
+**RAM aday AVR güncellemesi (03.11.2026):** RAM-only `957f963c1d4f59a04f18a896e9f6c92890061a49` Windows Arduino CLI **16/8 MHz 2/2 PASS**, Flash 26760/26756, statik RAM 1362. Kaynak 13/13 ve statik mutant 3/3. **Tam güncel v1.06 setup()/loop() host/native NOT_RUN**, firmware `main`e gönderilmedi. [RAM_20261103_AVR_SOURCE_QA.md](RAM_20261103_AVR_SOURCE_QA.md). Önceki satırlardaki RAM AVR NOT_RUN ifadeleri bu tarihsel kayıttan önceki durumu anlatır; bugünkü son durum AVR=PASS, FULL_LOOP=NOT_RUN.
+
 **ÖNCELİKLİ GÜVENLİK DÜZELTMESİ (2026-11-03):** Önceki EEPROM kurtarma adayındaki 48/48 PASS, bozulmuş commit marker'lı eski kaydın silinebildiği negatif kusuru kapsamıyordu. Kurtarma adayı geçersiz kılındı; tutucu adayda 17/48 kurtarılabilir, 31/48 SERVICE_HOLD. [EEPROM_RECOVERY_SAFETY_REVIEW.md](EEPROM_RECOVERY_SAFETY_REVIEW.md) — `RECOVERY_UI_AVR_NOT_RUN / RELEASE_BLOCKED`. RAM-only 8/16 MHz AVR de `NOT_RUN`.
 
 # PerPompa v1.06 — LCD-only kabul durumu (2026-11-03)
