@@ -135,7 +135,7 @@ int main(int argc, char **argv) {
       avr_eeprom_desc_t ee_get={.ee=NULL,.offset=0,.size=1024};
       avr_ioctl(avr, AVR_IOCTL_EEPROM_GET, &ee_get);
       if (ee_get.ee && ee_get.size>164) {
-        if (ee_get.ee[144]!=0xff) {ee_witness=1; if (ee_stage==1){ee_stage=2;next_uart_cycle=avr->cycle+32000;}}
+        if (ee_get.ee[144]!=0xff) {ee_witness=1; if (ee_stage==1){ee_stage=2;next_uart_cycle=avr->cycle; /* first UART completion at observed EEPROM witness write */}}
         if (ee_get.ee[109]==0xa5) ee_commit=1;
         if(negative&&(ee_get.ee[144]!=0xff||ee_get.ee[80]!=0xff||ee_get.ee[109]!=0xff))violation++;
       }
