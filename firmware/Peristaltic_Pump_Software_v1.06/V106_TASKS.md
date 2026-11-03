@@ -24,3 +24,11 @@ v1.05 ve P0-04 otomasyonu yerinde çalışmaya devam eder; v1.05'in tüm dosyala
 - [ ] **R0/R1:** Gerçek v1.06 `.ino`da kullanılmayan `inputString.reserve(200)` dinamik RAM girişimi ve 680 bayt statik boş SRAM; heap/stack tepe ölçümü — REVIEW/NOT_RUN.
 - [ ] Gerçek I²C, fiziksel EEPROM kesilmesi, motor STOP gecikmesi — PHYSICAL_NOT_RUN; RELEASE_BLOCKED.
 - Firmware, v1.05, v1.04, P0-04 otomasyonu ve kilitli manifesto değişmez; bu kayıt tek başına firmware PASS/COMPLETE değildir.
+
+## 2026-11-03 — İlk EEPROM kaydı kurtarma adayı / RAM incelemesi
+
+- [x] Kaynak başlığıyla korumalı kurtarma prototipi: **48/48 kilitli ilk-kayıt**, **1.153** kurtarma-kesinti denemesi; g++ ve clang++ ayrı ayrı **6.579/6.579 HOST_CPP PASS**; 2/2 negatif mutant yakalandı. Detay: [EEPROM_RECOVERY_CANDIDATE_QA.md](EEPROM_RECOVERY_CANDIDATE_QA.md).
+- [ ] Gerçek cihazda **açık, fiziksel yerel kurtarma onayı** ve yeniden kalibrasyon UI kabulü; henüz firmware'e bağlanmadı. **REVIEW/AVR_NOT_RUN/PHYSICAL_NOT_RUN**.
+- [x] Kullanılmayan iki `inputString` satırının bulunduğu doğrulandı; iki satırlık RAM adayı blob `957f963c1d4f59a04f18a896e9f6c92890061a49` hazırlandı ama `main` firmware değişmedi.
+- [ ] RAM adayı için gerçek Arduino Pro Mini **8/16 MHz AVR** ve özgün tam-setup/loop regresyonu; **NOT_RUN**.
+- [ ] Çalışma anı heap/stack en yüksek kullanım ölçümü, EEPROM gerçek kesinti, ekran ve motor bench — **NOT_RUN**. **RELEASE_BLOCKED**.
