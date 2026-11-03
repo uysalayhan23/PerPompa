@@ -46,3 +46,7 @@ Bir kez çalıştırılan GitHub Actions workflow'ları aktif `.github/workflows
 - Native/parite/negatif mutant kanıtı ve AVR 16/8MHz gerçek derleme sonuçları: [P004 EEPROM ISR stack raporu](../../firmware/Peristaltic_Pump_Software_v1.06/P004_EEPROM_ISR_STACK_REVIEW_20261103.md).
 - Sınırlı simAVR testinde EEPROM kayıt ve UART RX sırasında statik SRAM **1326 B değişmedi**, en dar gözlenen stack–heap boşluğu **200→201 B**. Ayrı tanı derlemesinin 44→10 B yerel çerçeve farkı optimize firmware en kötü-yol kazancı değildir.
 - **Karar:** Kazanç yalnız 1 B olduğu için üretime aktarılmayacak. Geçici Actions workflow'u kaldırıldı; saatlik otomasyon ve firmware korunur. `PHYSICAL_NOT_RUN`, `RELEASE_BLOCKED`.
+
+## 2026-11-03 — LCD menu 48 B stack buffer denemesi: RET
+
+`compact_menu_format_candidate.py` tam QA .ino `5c700947...` -> `87fb708c...` dönüşümünü SHA kilidiyle yapar; `run_compact_menu_avr_ab.sh` simAVR/AVR A/B derleme testidir. Host fuzz kaynağı `menu_format_equivalence.cpp.gz` (120.000 PASS; 12 mutant yakalandı). Ayrı no-LTO çerçevesi 76→24 B olsa da optimize simAVR stack 492→501 B ve boşluk 205→196 B geriledi; Actions genel FAIL. **DO_NOT_PROMOTE**, test workflow'u aktif main'de tutulmaz. [Kanıt ve karar](../../firmware/Peristaltic_Pump_Software_v1.06/P004_LCD_MENU_STACK_AB_REVIEW_20261103.md). `PHYSICAL_NOT_RUN`, `RELEASE_BLOCKED`.
