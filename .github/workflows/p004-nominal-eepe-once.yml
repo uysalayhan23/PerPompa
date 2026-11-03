@@ -9,7 +9,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   qa-only:
-    if: ${{ github.event.issue.user.login == 'uysalayhan23' && github.event.issue.title == 'P004-NOMINAL-EEPE-AVR-QA-20261103' }}
+    if: ${{ github.event.issue.user.login == 'uysalayhan23' && github.event.issue.title == 'P004-NOMINAL-EEPE-LIB-20261103' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:

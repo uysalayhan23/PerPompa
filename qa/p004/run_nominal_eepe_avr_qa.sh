@@ -7,10 +7,10 @@ git clone -q --depth 1 --branch v1.6 https://github.com/buserror/simavr.git "$ro
 revision=$(git -C "$root/simavr" rev-parse HEAD)
 test "$revision" = '1b6e6ed10a92438da47fe99864698db9ac2169b6' || { echo "UNEXPECTED_SIMAVR_REVISION=$revision" >&2; exit 3; }
 export P004_UPSTREAM_DIR="$root/simavr"
-PYTHONPATH="$PWD/qa/p004" python3 -m unittest -v test_patch_simavr_eeprom | tee "$root/report/PATCH_TESTS.txt"
+PYTHONPATH="$PWD/qa/p004" python3 -m unittest -v test_patch_simavr_eeprom 2>&1 | tee "$root/report/PATCH_TESTS.txt"
 python3 qa/p004/patch_simavr_eeprom.py --upstream "$root/simavr" --dry-run
 python3 qa/p004/patch_simavr_eeprom.py --upstream "$root/simavr"
-make -C "$root/simavr/simavr" -j2 RELEASE=1 > "$root/report/simavr-build.txt" 2>&1
+make -C "$root/simavr/simavr" libsimavr -j2 RELEASE=1 > "$root/report/simavr-build.txt" 2>&1
 lib=$(find "$root/simavr/simavr" -name 'libsimavr.a' -type f -print -quit)
 test -s "$lib" || { echo 'PATCHED_STATIC_LIBRARY_MISSING' >&2; exit 4; }
 mkdir -p "$root/include"
