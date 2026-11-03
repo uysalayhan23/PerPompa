@@ -34,3 +34,10 @@ v1.05 ve P0-04 otomasyonu yerinde çalışmaya devam eder; v1.05'in tüm dosyala
 - [x] Kullanılmayan iki `inputString` satırının bulunduğu doğrulandı; iki satırlık RAM adayı blob `957f963c1d4f59a04f18a896e9f6c92890061a49` hazırlandı ama `main` firmware değişmedi.
 - [ ] RAM adayı için gerçek Arduino Pro Mini **8/16 MHz AVR** ve özgün tam-setup/loop regresyonu; **NOT_RUN**.
 - [ ] Çalışma anı heap/stack en yüksek kullanım ölçümü, EEPROM gerçek kesinti, ekran ve motor bench — **NOT_RUN**. **RELEASE_BLOCKED**.
+
+## 2026-11-03 — Kurtarma sırasındaki güç kesintisi yeni stres regresyonu
+
+- [x] Review-only kurtarma kaynak başlıklarıyla GCC/Clang **315371/315371 × 2** kontrol PASS; **161** kurtarma-kesintisi, **0** izinsiz NEW_READY, **0** farklı EEPROM alanı değişikliği. [EEPROM_RECOVERY_CUT_STRESS_QA.md](EEPROM_RECOVERY_CUT_STRESS_QA.md).
+- [ ] Tam v1.06 `.ino setup()/loop()` kaynak entegrasyonu/native/AVR — **NOT_RUN**, menü henüz aktif firmware'de yok.
+- [ ] RAM-only aday iki AVR derlemesi — **NOT_RUN**; firmware commit **HOLD**.
+- [ ] Fiziksel EEPROM ve I²C LCD, durma gecikmesi, heap/stack tepe ölçümü — **NOT_RUN**, **RELEASE_BLOCKED**.
