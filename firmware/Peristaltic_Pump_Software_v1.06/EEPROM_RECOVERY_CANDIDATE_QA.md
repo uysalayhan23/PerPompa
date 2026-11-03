@@ -1,3 +1,5 @@
+> **GÜVENLİK DÜZELTMESİ — 2026-11-03:** Bu raporun aşağıdaki 48/48 kurtarma PASS sonucu, sonraki negatif testteki *önceden geçerli kaydın commit işaretinin bozulması* senaryosunu kapsamıyor. İlk kurtarma adayı bu kaydı yanlışlıkla silebildi. Bu aday **GÜVENLİ DEĞİL / KULLANMAYIN**. Daha tutucu aday ve güncel kabul: [EEPROM_RECOVERY_SAFETY_REVIEW.md](EEPROM_RECOVERY_SAFETY_REVIEW.md). Eski sayılar yalnız tarihsel test sonucu, uygulanabilir kabul değildir.
+
 # PerPompa v1.06 — Operatör onaylı ilk EEPROM kaydı kurtarma, RAM incelemesi (2026-11-03)
 
 **Sadece inceleme ve QA kaydı.** Hiçbir aktif firmware, EEPROM yerleşimi, motor veya P0-04 otomasyonu değiştirilmedi. Temel `main`: `d3e65e6cc72d32663892a2f3f315d0abc2695835`; v1.06 aktif firmware blob: `55b19a8b1017bf1924dc568439f920ec9c90064f`.

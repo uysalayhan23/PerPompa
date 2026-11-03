@@ -1,3 +1,5 @@
+**ÖNCELİKLİ GÜVENLİK DÜZELTMESİ (2026-11-03):** Önceki EEPROM kurtarma adayındaki 48/48 PASS, bozulmuş commit marker'lı eski kaydın silinebildiği negatif kusuru kapsamıyordu. Kurtarma adayı geçersiz kılındı; tutucu adayda 17/48 kurtarılabilir, 31/48 SERVICE_HOLD. [EEPROM_RECOVERY_SAFETY_REVIEW.md](EEPROM_RECOVERY_SAFETY_REVIEW.md) — `RECOVERY_UI_AVR_NOT_RUN / RELEASE_BLOCKED`. RAM-only 8/16 MHz AVR de `NOT_RUN`.
+
 # PerPompa v1.06 — LCD-only kabul durumu (2026-11-03)
 
 **Kapsam:** v1.05 ile tek firmware farkı 16×2 LCD'nin PCF8574 I²C sürücüsüne çevrilmesidir. Eski haberleşme prototipleri kaldırılmıştır.
