@@ -1,13 +1,18 @@
-# PerPompa v1.06 — LCD-only kabul planı (2026-11-03)
+# PerPompa v1.06 — LCD-only kabul durumu (2026-11-03)
 
-Hedef: v1.05 ile yalnız 16×2 LCD'nin PCF8574 I²C sürücüsü farklı olacak. Başka firmware, EEPROM, motor, menü veya iletişim işlevi eklenmeyecek.
+**Kapsam:** v1.05 ile tek firmware farkı 16×2 LCD'nin PCF8574 I²C sürücüsüne çevrilmesidir. Eski haberleşme prototipleri kaldırılmıştır.
 
-1. Canlı main v1.05 .ino ve bağlı başlık dosyalarının Git blob SHA'larını doğrula.
-2. Yalnız `LiquidCrystal` başlığını `Wire + hd44780_I2Cexp` ile, paralel LCD nesnesini I²C nesnesiyle değiştir. LCD dışı kaynak farkı sıfır olmalı.
-3. Eski menü, STEP, Remote, USB, kalibrasyon, RNG ve EEPROM/P0-04 güvenliklerini pozitif ve negatif testlerle koru.
-4. Her iki Arduino Pro Mini (16/8 MHz) gerçek AVR derlemesi 2/2 PASS, Flash/SRAM ve kaynak bütünlüğü doğrulanmadan v1.06 .ino için commit yapma.
-5. Gerçek LCD/enkoder ve pompa güvenliği fiziksel NOT_RUN; RELEASE_BLOCKED sürer.
-6. v1.05 klasörünün ilgili bütün dosyalarla arşive taşınması HOLD: P0-04 otomasyonu ve politika devri için ayrıca güvenli kabul gerekir.
-7. Mevcut Türkçe kullanıcı kılavuzu korunur; Engineering Manual en son.
+| Kabul | Durum |
+|---|---|
+| v1.05 kaynak blob ve altı header SHA | PASS |
+| v1.05 ile LCD dışı kaynak farkı | ZERO / PASS |
+| AVR 5V/16MHz | PASS — 27486 Flash, 1367 SRAM |
+| AVR 3.3V/8MHz | PASS — 27482 Flash, 1367 SRAM |
+| Yeni .ino Git blob SHA | 7933e4fe697a8778603ba553eb620e7788dc5ede |
+| Gerçek LCD/I²C ve enkoder testleri | NOT_RUN |
+| Motor, EEPROM, Remote, USB ve pompa fiziksel kabulü | NOT_RUN |
+| Ticari üretim | RELEASE_BLOCKED |
 
-Sadece main, [skip ci], force-push/Work/Codex/Actions yok. Kök AGENTS.md, v1.05 REVISION_MANIFEST.md ve v1.04 arşivi değişmez. NOT_RUN hiçbir koşulda PASS sayılmaz.
+**Önemli:** Kaynak eşitliği ve AVR derleme PASS, fiziksel güvenliği kanıtlamaz. 681 bayt kalan SRAM dinamik yığın güvenliği anlamına gelmez.
+
+v1.05 ve P0-04 otomasyonu yerinde çalışmaya devam eder; v1.05'in tüm dosyalarıyla arşive taşınması ancak açık devir kararı ve uygun kabulden sonra yapılabilir (HOLD). Kök AGENTS.md, v1.05 REVISION_MANIFEST.md, v1.04 arşivi, kullanıcı kılavuzu değiştirilmez. Sadece main + [skip ci], Actions/Work/Codex/force-push yok.
