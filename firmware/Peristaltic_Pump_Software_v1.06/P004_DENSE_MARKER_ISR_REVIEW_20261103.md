@@ -1,5 +1,7 @@
 # PerPompa P0-04 — Yoğun EEPROM işaretçisi / UART RX / Timer1 birleşik AVR QA
 
+> **2026-11-03 kaynak doğrulaması:** [simAVR v1.6 EEPROM zamanlama incelemesi](P004_SIMAVR_EEPROM_TIMING_MODEL_REVIEW_20261103.md) simAVR'nin EEPROM verisini ve EEPE bitini yazma sırasında **hemen** değiştirdiğini doğruladı; 3,4 ms gecikme yalnız ready IRQ'ya uygulanıyor. Bu testin 3.335/3.235 çevrimlik marker→commit süresi **fiziksel EEPROM karşılığı değildir**. Pozitif birleşik ISR `REVIEW`; Remote LOW 2/2 simülasyon PASS ve `RELEASE_BLOCKED` korunur.
+
 **2026-11-03 · Karar: `2/2_REMOTE_LOW_PASS` · `2/2_POSITIVE_REVIEW` · `ALL_PATHS_ISR_STACK_REVIEW` · `PHYSICAL_NOT_RUN` · `RELEASE_BLOCKED`.**
 
 ## Gerekçe ve yöntem
