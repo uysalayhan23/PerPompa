@@ -33,7 +33,11 @@ jobs:
           set -euo pipefail
           arduino-cli core update-index
           arduino-cli core install arduino:avr@1.8.8
-          arduino-cli lib install hd44780 TimerOne
+          if ! arduino-cli lib install hd44780 TimerOne; then
+            echo 'Transient Arduino mirror failure; one bounded retry'
+            sleep 5
+            arduino-cli lib install hd44780 TimerOne
+          fi
           mkdir -p "$HOME/Arduino/libraries"
           git clone --quiet --depth 1 --branch arduino https://github.com/0xPIT/encoder.git "$HOME/Arduino/libraries/ClickEncoder"
           sudo apt-get update -qq
