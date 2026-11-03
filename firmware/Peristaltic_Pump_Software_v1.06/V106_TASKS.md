@@ -16,3 +16,11 @@
 **Önemli:** Kaynak eşitliği ve AVR derleme PASS, fiziksel güvenliği kanıtlamaz. 680 bayt kalan SRAM dinamik yığın güvenliği anlamına gelmez.
 
 v1.05 ve P0-04 otomasyonu yerinde çalışmaya devam eder; v1.05'in tüm dosyalarıyla arşive taşınması ancak açık devir kararı ve uygun kabulden sonra yapılabilir (HOLD). Kök AGENTS.md, v1.05 REVISION_MANIFEST.md, v1.04 arşivi, kullanıcı kılavuzu değiştirilmez. Sadece main + [skip ci], GitHub Actions için 2026-11-03 tarihinde en çok 50 çalıştırma izni verilmiştir; yalnız gerekli testlerde kullanılır. Work/Codex/force-push yok.
+
+## 2026-11-03 EEPROM / SRAM ilk enerji kapısı
+
+- [x] v1.06 birebir Git blob başlıklarıyla 229/229 × 2 host C++ PASS; 82 kesilme noktası × 2 ve 2/2 negatif mutant yakalandı. Kaynak ve yöntem: [PREPOWER_EEPROM_QA.md](PREPOWER_EEPROM_QA.md).
+- [ ] **R0:** İlk EEPROM kaydının 50 kesilme konumundan 48'inde güvenli ama kullanıcı açısından otomatik kurtarmasız LOCKED görülüyor. P0-04 otomasyonuyla çakışmadan kurtarma tasarımı/testi ve kullanıcı kabulü — REVIEW.
+- [ ] **R0/R1:** Gerçek v1.06 `.ino`da kullanılmayan `inputString.reserve(200)` dinamik RAM girişimi ve 680 bayt statik boş SRAM; heap/stack tepe ölçümü — REVIEW/NOT_RUN.
+- [ ] Gerçek I²C, fiziksel EEPROM kesilmesi, motor STOP gecikmesi — PHYSICAL_NOT_RUN; RELEASE_BLOCKED.
+- Firmware, v1.05, v1.04, P0-04 otomasyonu ve kilitli manifesto değişmez; bu kayıt tek başına firmware PASS/COMPLETE değildir.
