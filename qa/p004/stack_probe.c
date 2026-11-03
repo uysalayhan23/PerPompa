@@ -6,6 +6,7 @@
 #include "simavr/sim_avr.h"
 #include "simavr/sim_elf.h"
 #include "simavr/avr_twi.h"
+#include "simavr/avr_ioport.h"
 
 typedef struct {
   avr_irq_t *input;
@@ -36,8 +37,8 @@ static uint16_t read16(avr_t *a, uint16_t addr) {
   return (uint16_t)a->data[addr] | ((uint16_t)a->data[addr+1] << 8);
 }
 int main(int argc, char **argv) {
-  if (argc != 6) {
-    fprintf(stderr,"Usage: probe ELF FREQ HBRK_HEX BSS_END_HEX LCD_OK_HEX_OR_0\n");
+  if (argc != 8) {
+    fprintf(stderr,"Usage: probe ELF FREQ HBRK BSS LCD MENU HWUI\n");
     return 2;
   }
   elf_firmware_t firmware = {0};
@@ -46,11 +47,17 @@ int main(int argc, char **argv) {
   const uint16_t brkaddr = (uint16_t)strtoul(argv[3],0,16);
   const uint16_t bssend = (uint16_t)strtoul(argv[4],0,16);
   const uint16_t lcdaddr = (uint16_t)strtoul(argv[5],0,16);
+  const uint16_t menuaddr = (uint16_t)strtoul(argv[6],0,16);
+  const uint16_t hwaddr = (uint16_t)strtoul(argv[7],0,16);
   avr_t *avr = avr_make_mcu_by_name("atmega328p");
   if (!avr) return 4;
   avr_init(avr);
   avr->frequency = hz;
   avr_load_firmware(avr, &firmware);
+  avr_irq_t *button=avr_io_getirq(avr, AVR_IOCTL_IOPORT_GETIRQ('D'), 2);
+  avr_irq_t *remote=avr_io_getirq(avr, AVR_IOCTL_IOPORT_GETIRQ('D'), 5);
+  if (button) avr_raise_irq(button, 1);
+  if (remote) avr_raise_irq(remote, 1);
   pcf8574_t pcf={0};
   pcf.latch = 0xff;
   pcf.input=avr_io_getirq(avr, AVR_IOCTL_TWI_GETIRQ(0), TWI_IRQ_INPUT);
@@ -59,8 +66,8 @@ int main(int argc, char **argv) {
     avr_irq_register_notify(output, pcf_rx, &pcf);
   uint16_t low=avr->ramend, highheap=bssend;
   uint64_t steps=0;
-  int state=0, lcd_seen=0, heap_seen=0;
-  const uint64_t limit=5000000;
+  int state=0, lcd_seen=0, heap_seen=0, hw_seen=0, stimulus=0;
+  const uint64_t limit=70000000;
   for (steps=0; steps<limit; steps++) {
     state=avr_run(avr);
     uint16_t sp=read16(avr, 0x5d); /* SPL at 0x5d, SPH at 0x5e */
@@ -74,6 +81,16 @@ int main(int argc, char **argv) {
     }
     if (lcdaddr >= 0x100 && lcdaddr < avr->ramend && avr->data[lcdaddr])
       lcd_seen=1;
+    if (hwaddr >= 0x100 && hwaddr < avr->ramend && avr->data[hwaddr]) hw_seen=1;
+    if (lcd_seen && button && remote && menuaddr >= 0x100 && menuaddr < avr->ramend && avr->cycle >= 11000000 && stimulus==0) {
+      avr->data[menuaddr]=11; avr->data[menuaddr+1]=0;
+      avr_raise_irq(button,0); stimulus=1;
+    }
+    if (stimulus==1 && avr->cycle >= 30000000) {avr_raise_irq(button,1); stimulus=2;}
+    if (stimulus==2 && avr->cycle >= 35000000) {avr_raise_irq(remote,0); stimulus=3;}
+    if (stimulus==3 && avr->cycle >= 39000000) {avr_raise_irq(remote,1); stimulus=4;}
+    if (stimulus==4 && avr->cycle >= 45000000) {avr_raise_irq(button,0); stimulus=5;}
+    if (stimulus==5 && avr->cycle >= 66000000) {avr_raise_irq(button,1); stimulus=6;}
     if (state==cpu_Crashed || state==cpu_Done) break;
   }
   int remaining=(int)low - (int)highheap;
@@ -83,7 +100,8 @@ int main(int argc, char **argv) {
   printf("SIMAVR_BSS_END=0x%04x\nSIMAVR_HEAP_BREAK_HWM=0x%04x\nSIMAVR_HEAP_BRK_OBSERVED=%d\n",bssend,highheap,heap_seen);
   printf("SIMAVR_STACK_HEAP_GAP_OBSERVED=%d\n",remaining);
   printf("SIMAVR_LCD_INIT_OBSERVED=%d\nSIMAVR_I2C_WRITES=%" PRIu64 "\nSIMAVR_I2C_READS=%" PRIu64 "\n",lcd_seen,pcf.rx,pcf.tx);
-  printf("SIMAVR_CPU_STATE=%d\nSIMAVR_SCOPE=BOOT_AND_BOUND_IDLE_TRACE_NOT_PHYSICAL_PEAK\n",state);
+  printf("SIMAVR_CPU_STATE=%d\nSIMAVR_INPUT_STIMULUS_STAGES=%d\nSIMAVR_HW_UI_OBSERVED=%d\n",state,stimulus,hw_seen);
+  printf("SIMAVR_SCOPE=BOOT_LCD_ENCODER_REMOTE_SCRIPT_NOT_EXHAUSTIVE_OR_PHYSICAL_PEAK\n");
   avr_terminate(avr);
   return (state==cpu_Crashed || remaining < 0) ? 6 : 0;
 }

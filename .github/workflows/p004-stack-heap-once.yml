@@ -86,13 +86,17 @@ jobs:
             brk=$(getaddr "$report/symbols-$name.txt" '__brkval')
             bss=$(getaddr "$report/symbols-$name.txt" '__bss_end')
             lcd=$(getaddr "$report/symbols-$name.txt" 'lcd_init_ok')
+            menuaddr=$(getaddr "$report/symbols-$name.txt" 'menu_number_1')
+            hwaddr=$(getaddr "$report/symbols-$name.txt" 'hwUiActive')
             echo "SYMBOLS_$name brk=$brk bss=$bss lcd=$lcd" | tee -a "$report/RESULT.txt"
             if [[ -z "$brk" || -z "$bss" ]]; then
               echo "SIMAVR_$name=REVIEW_MISSING_SYMBOLS" | tee -a "$report/RESULT.txt"
               continue
             fi
             if [[ -z "$lcd" ]]; then lcd=0; fi
-            if timeout 75s "$RUNNER_TEMP/p004/stack_probe" "$elf" "$hz" "$brk" "$bss" "$lcd" > "$report/simavr-$name.txt" 2>&1; then
+            if [[ -z "$menuaddr" ]]; then menuaddr=0; fi
+            if [[ -z "$hwaddr" ]]; then hwaddr=0; fi
+            if timeout 75s "$RUNNER_TEMP/p004/stack_probe" "$elf" "$hz" "$brk" "$bss" "$lcd" "$menuaddr" "$hwaddr" > "$report/simavr-$name.txt" 2>&1; then
               echo "SIMAVR_$name=BOUNDED_TRACE_PASS" | tee -a "$report/RESULT.txt"
             else
               echo "SIMAVR_$name=REVIEW" | tee -a "$report/RESULT.txt"
